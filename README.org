@@ -1,0 +1,99 @@
+#+Title: udaicR
+
+
+* Sobre el paquete
+** Información para mi
+Como tengo varios usuarios de github para diversas cosas a veces es complicado
+mantener todo en linea, así que me dejo aquí la "chuleta" de cómo gestionarlo:
+
+#+BEGIN_SRC fish
+cd PROGRAMACION
+git clone git@github.com:feranpre/udaicR.git
+cd udaicR
+git config.user feranpre
+git config.email feranpre@gmail.com
+#+END_SRC
+
+Con esto ya está el repositorio configurado para usar las claves de ssh. Por si
+alguien no sabe cómo se gestionan lo dejo aquí (aunque sobre esto si que hay
+documentación a mano)
+
+1. Lo primero es crear las claves que necesitemos
+   #+BEGIN_SRC fish
+   cd .ssh/
+   ssh-keygen -t rsa -C "feranpre@gmail.com"
+   #+END_SRC
+
+   Esto te generará dos archivos, llamemoslos feranpre_id_rsa y
+   feranpre_id_rsa.pub
+
+2. Ahora a registrarlas en el sistema
+
+   1. Si tienes claves viejas puede que quieras borrarlas
+      #+BEGIN_SRC fish
+ssh-add -D
+      #+END_SRC
+
+   2. Ahora añades las que quieras
+      #+BEGIN_SRC fish
+ssh-add .ssh/feranpre_id_rsa
+      #+END_SRC
+
+   3. Asegurate de que están
+      #+BEGIN_SRC fish
+ssh-add -l
+      #+END_SRC
+
+3. Decirle a ssh que use las claves con según que dominios
+   Para esto hace falta editar .ssh/config y añadir una sección que sea
+   básicamente esta:
+
+   #+BEGIN_QUOTE
+Host github.com-feranpre
+   HostName github.com
+   User git
+   IdentityFile ~/.ssh/feranpre_id_rsa
+   #+END_QUOTE
+
+   Esto debería identificar cuando se usa github.com-feranpre como dirección, de
+   ahí que más arriba insistiera en el -feranpre, pero no se qué pasa en mi
+   sistema que no funciona bien y tengo que hacer lo de configurar el usuario en
+   el repositorio.
+
+   *Si a alguien se le ocurre cómo arreglarlo, que me lo diga*
+
+4. Ahora lo que tiene es que decirle a github que quieres identificarte mediante
+   clave, para esto entraras en tu usuario y le darás a Settings -> SSH and GPG
+   keys.
+
+   Le das a añadir nueva clave SSH, pone un nombre que identifique la máquina y
+   le pegas feranpre_id_rsa.pub
+
+A correr, todo debería funcionar
+
+* Instalación
+
+Para instalar el paquete hace falta instalar =devtools=, así que abrimos R y
+ponemos
+
+#+BEGIN_SRC R
+install.packages("devtools")
+#+END_SRC
+
+Cuando se instale lo cargamos
+#+BEGIN_SRC R
+library(devtools)
+#+END_SRC
+
+Con devtools viene la función que necesitamos
+#+BEGIN_SRC R
+install_github("feranpre/udaicR")
+#+END_SRC
+
+Cuando se termine de instalar solo necesitamos cargarlo como cualquier otro
+paquete
+#+BEGIN_SRC R
+library(udaicR)
+#+END_SRC
+
+Listo para ser usado.
