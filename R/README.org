@@ -1,0 +1,57 @@
+
+#+TITLE: udaicR
+
+
+* Introducción
+La idea de udaicR es hacer un paquete de R que facilite la entrada a quien
+quiere iniciarse en R.
+
+Al principio R es muy complicado y hay cosas "sencillas" que se vuelven un reto
+importante o que son engorrosas, como el hecho de tener que obtener las
+frecuencias de las variables en una tabla diferente de los porcentajes.
+
+Está claro que todo esto está ya resuelto en R, es cuestión de saber usar los
+paquetes, pero en ese primer momento encontrar una solución sencilla a una tabla
+de frecuencias o de medias es un mundo.
+
+Además me gustaría hacer con las funciones que más uso un repositorio de
+"funcionalidad extendida", por ejemplo cuando pido la media de una variable
+quiero que de paso me su cálculo de normalidad. Si no lo quiero a tiempo estoy
+de quitarlo, pero tenerlo en la misma tabla me parece realmente cómodo y al
+final es algo que uso *todo el tiempo*.
+
+* Instalación
+
+** MIA
+Como tengo varios usuarios para casi todo tengo que organizarme de una forma un
+tanto particular y lo dejo aquí para que no se me olvide. Cuando clono el
+repositorio en cualquier lado lo debo clonar como:
+git@github.com-feranpre:feranpre/udaicR.git
+
+ojo que es github.com-feranpre:feranpre/dsafdsafds
+
+** El resto de la humanidad
+1. Para usar este paquete lo primero es instalar devtools en R
+   #+BEGIN_SRC R
+install.packages("devtools")
+   #+END_SRC
+
+2. Tras instalarlo hay que cargarlo
+   #+BEGIN_SRC R
+library(devtools)
+   #+END_SRC
+
+3. Por último se instala el paquete desde github
+   #+BEGIN_SRC R
+install_github("feranpre/udaicR")
+   #+END_SRC
+
+Esto debería estar listo para usarse como siempre
+#+BEGIN_SRC R
+library(udaicR)
+#+END_SRC
+
+
+
+* Frecuencias y porcentajes
+Siempre me ha parecido que R tenía una falta en este sentido
