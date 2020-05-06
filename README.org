@@ -48,12 +48,12 @@ ssh-add -l
    Para esto hace falta editar .ssh/config y añadir una sección que sea
    básicamente esta:
 
-   #+BEGIN_QUOTE
+   #+BEGIN_SRC
 Host github.com-feranpre
    HostName github.com
    User git
    IdentityFile ~/.ssh/feranpre_id_rsa
-   #+END_QUOTE
+   #+END_SRC
 
    Esto debería identificar cuando se usa github.com-feranpre como dirección, de
    ahí que más arriba insistiera en el -feranpre, pero no se qué pasa en mi
