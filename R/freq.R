@@ -1,32 +1,98 @@
-#==============================================================================================================
-# Funcion para hacer tablas de frecuencias
-#  df              = data.frame
-#  ...             = variables sin más, no hace falta lista ni " ni nada
-#  col_names       = vector con los nombres para las columnas por defecto -> c("Variable","Values","n","rel.freq")
-#  total           = hacer total de n y de %
-#  sort_by_values  = ordena por nombre de categorias
-#  sort_by_freq    = ordena por n de categorias
-#  sort_by_percent = ordena por % de categorias
-#  sort_descending = ordena de forma descendente (de mayor a menor)
-#
-#
-#==============================================================================================================
-# EJEMPLO DE USO
-# -------------------
-# Generamos datos aleatorios
-# edad_ <- sample(x = 65:100, size=30, replace = TRUE )
-# estatura_ <- as.integer(sample(x = 120:205, size=30, replace = TRUE ))
-# sexo_ <- sample(x = c("Hombre", "Mujer"), prob = c(.5,.5), size = 30, replace = TRUE)
-# rubio_ <- sample(x = c("Si", "No"), prob = c(.2,.8), size = 30, replace = TRUE)
-# data_ <- data.frame(EDAD=edad_,ESTATURA=estatura_,SEXO=sexo_,RUBIO=rubio_)
-#
-# FRECUENCIAS
-# freq(data_,SEXO,RUBIO)
-# freq(data_,SEXO,RUBIO, decimales = 3)
-# freq(data_,SEXO,RUBIO, decimales = 3, sort_by_percent = TRUE)
-#
-#==================================================================================
 require("dplyr")
+
+tab <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals = TRUE,
+                chi = TRUE, decimals = 2){
+ if (!requireNamespace("dplyr", quietly = TRUE)) {
+    stop("Package \"dplyr\" needed for this function to work. Please install it.",
+      call. = FALSE)
+ }
+ x <- enquo(x)
+ y <- enquo(y)
+
+ d <- df %>% select(!! x,!! y)
+ # print(d)
+ t1 <- table(d[,1], d[,2])
+ t_row_prop <- round(prop.table(t1, margin = 1)*100, digits = decimals) #.. row
+ t_row_prop <- as.data.frame.matrix(t_row_prop) %>% mutate(row_totals = rowSums(.))
+ t_col_prop <- round(prop.table(t1, margin = 2)*100, digits = decimals) #.. col
+ # t_col_prop <- as.data.frame.matrix(t_col_prop) %>% mutate(col_totals = colSums(.))
+
+ col_per_level = 0
+ if (col_percent) col_per_level = col_per_level +1
+ if (row_percent) col_per_level = col_per_level +1
+
+ for (cn in 1:ncol(t1)) {
+   if (!exists("result_t")) {
+     result_t <- t1[,cn]
+     result_t <- as.data.frame(result_t)
+   }
+   else result_t <- cbind(result_t,t1[,cn])
+
+   col_name_num = cn+(col_per_level*(cn-1))
+   # print(paste(levels(as.factor(d[,2]))[cn],"n",sep = "_"))
+   colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"n",sep = "_")
+   if (col_percent) {
+     result_t <- cbind(result_t,t_col_prop[,cn])
+     col_name_num = col_name_num + 1
+     colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"col%",sep = "_")
+   }
+   if (row_percent) {
+     result_t <- cbind(result_t,t_row_prop[,cn])
+     col_name_num = col_name_num + 1
+     colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"row%",sep = "_")
+   }
+ }
+
+
+ #-- add Variable name Var
+ var_column = c(paste(quo_name(x),levels(as.factor(d[,1])),sep = "_"),rep("",nrow(result_t)- length(levels(as.factor(d[,1])))))
+ result_t = mutate(result_t,Variable=var_column)
+ #-- take Variable_column to the front
+ result_t <- result_t %>% select(Variable, everything())
+
+
+ if (show_totals){
+   if (row_percent) {
+     result_t <- cbind(result_t, t_row_prop[,ncol(t_row_prop)])
+     colnames(result_t)[ncol(result_t)] <- "row_totals"
+   }
+
+   if (col_percent) {
+     result_t <- result_t %>% adorn_totals("row")
+     # rownames(result_t)[nrow(result_t)] <- "col_totals"
+     if (row_percent) {
+       # right now the cols are:
+       # Variable + n % row% col% <-- per level so...
+       for (i in 1:ncol(t1)){
+         col <- 1 + (i*(col_per_level+1))
+         result_t[nrow(result_t),col] <- NA
+       }
+
+     }
+   }
+ }
+
+ if (chi){
+   chis <- suppressWarnings(chisq.test(t1))
+   chis_under_5 <- sum(chis$expected < 5)
+   result_t <- rbind(result_t, rep("",ncol(result_t)))
+   result_t <- rbind(result_t,c("Num of cells with expected <5",chis_under_5,rep("",ncol(result_t)-2)))
+   if (chis_under_5 > 0) result_t <- rbind(result_t,c("Fisher's exact test: ",round(fisher.test(t1)$p.value, digits = decimals),rep("",ncol(result_t)-2)))
+   else result_t <- rbind(result_t,c("Pearson's chi square test: ",round(chis$p.value, digits = decimals),rep("",ncol(result_t)-2)))
+ }
+
+
+ rownames(result_t)<-NULL
+ colnames(result_t)[1] <- paste("Variable", quo_name(y), sep = "_")
+
+
+ return(result_t)
+}
+
+
+
+
+
 
 #' Title freq
 #'
@@ -83,6 +149,14 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
                  decimals=2, show_warnings = TRUE, total=TRUE, total_by_group = TRUE,
                  sort_by_values=FALSE, sort_by_freq=FALSE, sort_by_percent=FALSE, sort_decreasing = TRUE,
                  debug = FALSE) {
+ if (!requireNamespace("dplyr", quietly = TRUE)) {
+    stop("Package \"dplyr\" needed for this function to work. Please install it.",
+      call. = FALSE)
+ }
+  if (!requireNamespace("janitor", quietly = TRUE)) {
+    stop("Package \"janitor\" needed for this function to work. Please install it.",
+      call. = FALSE)
+ }
 
   if (debug) {print(paste("Column names: ",col_names))}
 

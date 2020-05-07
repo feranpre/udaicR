@@ -32,6 +32,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
 
   for (v in vars) {
     vs <- quo_name(v)
+    col_names_temp <- col_names
 
     # --- NO GROUPING
     if (missing("group_by_col")) {
@@ -54,8 +55,8 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
       result_temp <- df %>%
                         group_by(!!! agrupa) %>%
                               summarise(
-                                  n = n()-sum(is.na(.data[[quo_name(v)]])),
-                                  missing = sum(is.na(.data[[quo_name(v)]])),
+                                  n = n()-sum(is.na(!! v)),
+                                  missing = ifelse(all(!is.na(!! v)),0,sum(is.na(!! v))),
                                   min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
                                   max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
                                   mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
@@ -68,42 +69,42 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     result_temp <- as.data.frame(result_temp)
 
     if (n == FALSE) {
-      col_names <- col_names[-3]
+      col_names_temp <- col_names_temp[-3]
       result_temp$n <- NULL
     }
     if (missing == FALSE) {
-      col_names <- col_names[-4]
+      col_names_temp <- col_names_temp[-4]
       result_temp$missing <- NULL
     }
     if (min == FALSE) {
-      col_names <- col_names[-5]
+      col_names_temp <- col_names_temp[-5]
       result_temp$min <- NULL
     }
     if (max == FALSE) {
-      col_names <- col_names[-6]
+      col_names_temp <- col_names_temp[-6]
       result_temp$max <- NULL
     }
     if (mean == FALSE) {
-      col_names <- col_names[-7]
+      col_names_temp <- col_names_temp[-7]
       result_temp$mean <- NULL
     }
     if (sd == FALSE) {
-      col_names <- col_names[-8]
+      col_names_temp <- col_names_temp[-8]
       result_temp$sd <- NULL
     }
     if (median == FALSE) {
-      col_names <- col_names[-9]
+      col_names_temp <- col_names_temp[-9]
       result_temp$median <- NULL
     }
     if (range == FALSE) {
-      col_names <- col_names[-10]
+      col_names_temp <- col_names_temp[-10]
       result_temp$range <- NULL
     }
     if (norm.test == FALSE) {
-      col_names <- col_names[-11]
+      col_names_temp <- col_names_temp[-11]
       result_temp$shapiro <- NULL
     }
-    else result_temp$shapiro <- c(rep(NA,nrow(result_temp)-1),result_temp$shapiro[1])
+    else result_temp$shapiro <- c(rep(NA,nrow(result_temp)-1),round(result_temp$shapiro[1],digits = decimales))
 
     # -- add a column with the name of the var being studied
     result_temp <- cbind(c(quo_name(v),rep("",nrow(result_temp)-1)),result_temp)
@@ -111,13 +112,18 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
 
     # we take the groups col name the last to make all the rest of the code usable,
     # if we took it before this point all the
-    if (missing("group_by_col")) col_names <- col_names[-2]
+    if (missing("group_by_col")) col_names_temp <- col_names_temp[-2]
 
-    colnames(result_temp) <- col_names
+    colnames(result_temp) <- col_names_temp
 
-    if (exists("result_df")) result_df <- rbind(result_df,result_temp)
-    else result_df <- result_temp
+
+    # result_df[[length(result_df)+1]] <- as.data.frame(result_temp)
+    if (!exists("result_df")) result_df <- as.data.frame(result_temp)
+    else result_df <- rbind(result_df,result_temp)
   }
+
+
+  if (length(result_df) == 1) result_df <- result_df[[1]]
   return(result_df)
 }
 
