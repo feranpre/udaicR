@@ -48,5 +48,9 @@ means(data_, AGE, HEIGHT)
 # --- means with grouping
 means(data_, AGE, HEIGHT, group_by_col = SEX)
 
+# --- esto funciona también con media
+media(data_, HEIGHT)
+
+
 (r <- tab(data_,SEX,BLOND,row_percent = F, show_totals = T))
 kable(r)

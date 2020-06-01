@@ -1,3 +1,4 @@
 exportPattern("^[[:alpha:]]+")
 import(dplyr)
 import(janitor)
+import(stringi)
