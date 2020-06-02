@@ -26,6 +26,7 @@ riemann.sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
 
     if (missing("group_by_col")){
       x <- df[,quo_name(v)]
+      if(class(x) == "difftime") x <- as.numeric(x)
       if (missing("min.value")) temp.min = min(x,na.rm = TRUE)
       else temp.min = min.value
 
@@ -36,7 +37,7 @@ riemann.sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
       else temp.increment = inc.value
 
       if(debug)print(paste("Var->",quo_name(v)))
-      riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
+      result.df <- riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
     } else {
       agrupa <- enquos(group_by_col)
       for (v.grupo in agrupa) {
@@ -65,8 +66,14 @@ riemann.sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
         if (debug) print(result.df)
       }
     }
+    names.old <- names(result.df)
+    result.df <- cbind(c(quo_name(v),rep("",nrow(result.df)-1)),result.df)
+    names(result.df) <- c("Var",names.old)
+
+    if(!exists("result.df.final")) result.df.final <- result.df
+    else result.df.final <- rbind(result.df.final, result.df)
   }
-  if (exists("result.df")) return(result.df)
+  if (exists("result.df.final")) return(result.df.final)
 }
 
 riemann.sum.basic <- function(x,inc.value=NULL, min.value = NULL, max.value = NULL){
