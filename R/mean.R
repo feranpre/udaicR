@@ -41,7 +41,7 @@
 means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TRUE, n=TRUE, missing=TRUE,
                        min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
                        median=TRUE, range=TRUE, norm.test = TRUE,
-                       col_names = c("var","groups","n.valid","n.missing","min","max","mean","sd","median","range","shapiro")) {
+                       col_names = c("var","groups","n.valid","n.missing","min","max","mean","sd","median","range","shapiro-wilk")) {
   vars <- enquos(...)
   result_df <- list()
 
@@ -52,34 +52,67 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     # --- NO GROUPING
     if (missing("group_by_col")) {
       # result_temp <- df[quo_name(v)] %>% summarise(
-      result_temp <- df %>% summarise(
-                                    n = n()-sum(is.na(.data[[quo_name(v)]])),
-                                    missing = sum(is.na(.data[[quo_name(v)]])),
-                                    min = round(min(!! v, na.rm=TRUE), digits=decimales),
-                                    max = round(max(!! v, na.rm=TRUE), digits=decimales),
-                                    mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
-                                    sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
-                                    median = round(median(!! v, na.rm = TRUE), digits=decimales),
-                                    range = round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales),
-                                    shapiro = shapiro.test(!! v)$p.value
-                                  )
+      if (nrow(df) < 5000){
+        result_temp <- df %>% summarise(
+          n = n()-sum(is.na(.data[[quo_name(v)]])),
+          missing = sum(is.na(.data[[quo_name(v)]])),
+          min = round(min(!! v, na.rm=TRUE), digits=decimales),
+          max = round(max(!! v, na.rm=TRUE), digits=decimales),
+          mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
+          sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
+          median = round(median(!! v, na.rm = TRUE), digits=decimales),
+          range = round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales),
+          shapiro = shapiro.test(!! v)$p.value
+        )
+      } else {
+        result_temp <- df %>% summarise(
+          n = n()-sum(is.na(.data[[quo_name(v)]])),
+          missing = sum(is.na(.data[[quo_name(v)]])),
+          min = round(min(!! v, na.rm=TRUE), digits=decimales),
+          max = round(max(!! v, na.rm=TRUE), digits=decimales),
+          mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
+          sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
+          median = round(median(!! v, na.rm = TRUE), digits=decimales),
+          range = round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales),
+          shapiro = ks.test(!! v, "pnorm", mean=mean(!! v, na.rm=TRUE), sd=sd(!! v, na.rm=TRUE))$p.value
+        )
+      }
+
+
     }
     else {
       agrupa <- enquos(group_by_col)
-      s.test <- shapiro.test(df[,quo_name(v)])$p.value
-      result_temp <- df %>%
-                        group_by(!!! agrupa) %>%
-                              summarise(
-                                  n = n()-sum(is.na(!! v)),
-                                  missing = ifelse(all(!is.na(!! v)),0,sum(is.na(!! v))),
-                                  min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
-                                  max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
-                                  mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
-                                  sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
-                                  median = round(median(!! v, na.rm = TRUE), digits=decimales),
-                                  range = ifelse(all(is.na(!! v)),NA, round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
-                                  shapiro = s.test
-                                )
+      if (nrow(df) < 5000){
+        s.test <- shapiro.test(df[,quo_name(v)])$p.value
+        result_temp <- df %>%
+                          group_by(!!! agrupa) %>%
+                                summarise(
+                                    n = n()-sum(is.na(!! v)),
+                                    missing = ifelse(all(!is.na(!! v)),0,sum(is.na(!! v))),
+                                    min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
+                                    max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
+                                    mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
+                                    sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
+                                    median = round(median(!! v, na.rm = TRUE), digits=decimales),
+                                    range = ifelse(all(is.na(!! v)),NA, round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
+                                    shapiro = s.test
+                                  )
+      } else {
+        s.test <- ks.test(df[,quo_name(v)], "pnorm", mean=mena(df[,quo_name(v)]), sd=sd(df[,quo_name(v)]))$p.value
+        result_temp <- df %>%
+          group_by(!!! agrupa) %>%
+          summarise(
+            n = n()-sum(is.na(!! v)),
+            missing = ifelse(all(!is.na(!! v)),0,sum(is.na(!! v))),
+            min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
+            max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
+            mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
+            sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
+            median = round(median(!! v, na.rm = TRUE), digits=decimales),
+            range = ifelse(all(is.na(!! v)),NA, round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
+            shapiro = s.test
+          )
+      }
     }
     result_temp <- as.data.frame(result_temp)
 
@@ -119,7 +152,11 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
       col_names_temp <- col_names_temp[-11]
       result_temp$shapiro <- NULL
     }
-    else result_temp$shapiro <- c(rep(NA,nrow(result_temp)-1),round(result_temp$shapiro[1],digits = decimales))
+    else {
+      result_temp$shapiro <- c(rep(NA,nrow(result_temp)-1),round(result_temp$shapiro[1],digits = decimales))
+      if (result_temp$shapiro < 10^((decimales+1)*-1)) result_temp$shapiro <- paste("<",as.character(10^((decimales+1)*-1)),"")
+      if(nrow(df) > 5000) col_names_temp[11] <- "kolmogorov-smirnov"
+    }
 
     # -- add a column with the name of the var being studied
     result_temp <- cbind(c(quo_name(v),rep("",nrow(result_temp)-1)),result_temp)
