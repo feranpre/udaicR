@@ -23,6 +23,21 @@
 #'
 #' @examples
 #'
+#' data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
+#'                     HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
+#'                     SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
+#'                     BLOND=sample(x = c("Yes", "No"), prob = c(.2,.8), size = 30, replace = TRUE)
+#' )
+#' data_ <- rbind(data_, list(NA,NA,NA,NA))
+#' data_ <- rbind(data_, list(NA,NA,"Male",NA))
+#' data_ <- rbind(data_, list(NA,NA,NA,"No"))
+#'
+#' means(df,AGE)
+#'
+#' means(df,AGE,HEIGHT)
+#'
+#' mean(df,AGE group_by_col=SEX)
+#'
 means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TRUE, n=TRUE, missing=TRUE,
                        min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
                        median=TRUE, range=TRUE, norm.test = TRUE,

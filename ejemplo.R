@@ -54,3 +54,11 @@ media(data_, HEIGHT)
 
 (r <- tab(data_,SEX,BLOND,row_percent = F, show_totals = T))
 kable(r)
+
+
+#========================================================
+#
+#      ---- c.table -----
+#
+#=========================================================
+c.table(data_,SEX,BLOND)
