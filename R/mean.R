@@ -52,7 +52,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     # --- NO GROUPING
     if (missing("group_by_col")) {
       # result_temp <- df[quo_name(v)] %>% summarise(
-      if (nrow(df) < 5000){
+      if (nrow(df) < 5000) & (nrow(df) - sum(is.na(df[quo_name(v)])) > 3){
         result_temp <- df %>% summarise(
           n = n()-sum(is.na(.data[[quo_name(v)]])),
           missing = sum(is.na(.data[[quo_name(v)]])),
@@ -82,7 +82,9 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     }
     else {
       agrupa <- enquos(group_by_col)
-      if (nrow(df) < 5000){
+      ff <- df %>%
+
+      if (nrow(df) < 5000) & (nrow(df) - sum(is.na(df[quo_name(v)])) > 3){
         s.test <- shapiro.test(df[,quo_name(v)])$p.value
         result_temp <- df %>%
                           group_by(!!! agrupa) %>%
