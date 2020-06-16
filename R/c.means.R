@@ -1,10 +1,42 @@
 
 
-c.means <- function(df,x,group,decimals = 2, alternative = "two.sided", debug = FALSE, decimales = 2, show.test.method = TRUE){
+c.means <- function(df,x,group,decimals = 2, alternative = "two.sided",
+                    debug = FALSE, decimales = 2, show.test.method = TRUE,
+                    conf.level = 0.95, show.warnings = TRUE) {
+
   if (!requireNamespace("dplyr", quietly = TRUE)) {
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
          call. = FALSE)
   }
+
+  if (!exists("conf.level")) {
+    if (show.warnings) warning("conf.level is empty, using 0.95 default value")
+    conf.level = 0.95
+  } else {
+    if (conf.level >= 1) {
+      if (show.warnings) warning("conf.level is 1, using 0.95 default value")
+      conf.level = 0.95
+    }
+    else if (conf.level <= 0) {
+      if (show.warnings) warning("conf.level is 0, using 0.95 default value")
+      conf.level = 0.95
+    }
+  }
+
+  if ((!exists("decimales")) | (is.null(decimales)) ){
+    if (show.warnings) warning("decimales is empty, using 2 default value")
+    decimales = 2
+  }
+
+  if (!exists("alternative")) {
+    if (show.warnings) warning("alternative hypothesis is empty, using 'two.sided' default value")
+    alternative = "two.sided"
+  } else if ((alternative != "two.sided") & (alternative != "greater") & (alternative != "less")) {
+    if (show.warnings) warning('alternative parameter was used but with incorrect option. Options available are: "two.sided","greater","less". Defaulting to "two.sided"')
+    alternative = "two.sided"
+  }
+
+
   x <- rlang::sym(rlang::as_label(rlang::enquo(x)))
   group <- rlang::sym(rlang::as_label(rlang::enquo(group)))
 
@@ -19,7 +51,7 @@ c.means <- function(df,x,group,decimals = 2, alternative = "two.sided", debug = 
   }
 
   if (length(levels(df[,quo_name(group)])) != 2){
-    warning("Levels of group variable not equal to 2. Aborting")
+    print(paste("ERROR: Levels of group variable not equal to 2. Aborting. Levels:",levels(df[,quo_name(group)])))
     return(NULL)
   }
 
@@ -34,12 +66,10 @@ c.means <- function(df,x,group,decimals = 2, alternative = "two.sided", debug = 
 
   if (debug) print(paste("LEVENE's p:",levene))
 
-  if ((alternative != "two.sided") & (alternative != "greater") & (alternative != "less")) {
-    warning('alternative parameter was used but with incorrect option. Options available are: "two.sided","greater","less". Defaulting to "two.sided"')
-    alternative = "two.sided"
-  }
 
-  temp <- t.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales)
+  temp <- t.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales, conf.level = conf.level)
+
+  if (debug) print(temp)
 
   temp.p <- temp$p.value
   if (temp.p < 10^((decimales+1)*-1)) temp.p <- paste("<",as.character(10^((decimales+1)*-1)),"")
@@ -48,17 +78,20 @@ c.means <- function(df,x,group,decimals = 2, alternative = "two.sided", debug = 
 
   result.df <- data.frame(groups = c("",levels(df[,quo_name(group)])),
                           mean.var = c(quo_name(x),"",""),
+                          n = c("", nrow(df2[[1]][,quo_name(x)]),nrow(df2[[2]][,quo_name(x)])),
                           homocedasticity.p = c(ifelse(show.test.method,levene$method,""),"",levene$p.value),
                           t = c(ifelse(show.test.method,temp$method,""),"",round(temp$statistic,digits = decimales)),
                           p = c("","",temp.p),
                           means = c("",round(temp$estimate,digits = decimales)),
-                          IC95.low = c("",round(t.test(df2[[1]][,quo_name(x)])$conf.int[1],digits = decimales),
-                                          round(t.test(df2[[2]][,quo_name(x)])$conf.int[1],digits = decimales)
+                          IC95.low = c("",round(t.test(df2[[1]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimales),
+                                          round(t.test(df2[[2]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimales)
                                       ),
                           IC95.high = c("",round(t.test(df2[[1]][,quo_name(x)])$conf.int[2],digits = decimales),
                                            round(t.test(df2[[2]][,quo_name(x)])$conf.int[2],digits = decimales)
                                         )
                         )
+  names(result.df)[8] <- paste("IC",conf.level*100,".low", sep = "")
+  names(result.df)[9] <- paste("IC",conf.level*100,".high", sep = "")
   row.names(result.df) <- NULL
   return(result.df)
 
