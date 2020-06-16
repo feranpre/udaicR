@@ -1,3 +1,5 @@
+rm(list = ls())
+
 library(dplyr)
 data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
                      HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
@@ -7,6 +9,7 @@ data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
 data_ <- rbind(data_, list(34,NA,NA,NA))
 data_ <- rbind(data_, list(33,NA,"Male",NA))
 data_ <- rbind(data_, list(22,NA,NA,"No"))
+data_$EMPTY <- rep(NA,nrow(data_))
 
 
 
@@ -55,6 +58,7 @@ media(data_, HEIGHT)
 (r <- tab(data_,SEX,BLOND,row_percent = F, show_totals = T))
 kable(r)
 
+means(data_, EMPTY, group_by_col = SEX)
 
 #========================================================
 #

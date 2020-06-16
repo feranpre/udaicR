@@ -7,6 +7,7 @@
 #' @param group_by_col    variable to group the others by
 #' @param decimales       number of decimal to show
 #' @param show_warnings   show warnings
+#' @param show_errors     show errors
 #' @param n               show n (without missing values)
 #' @param missing         show number of missing values
 #' @param min             show min value (or NA)
@@ -38,43 +39,67 @@
 #'
 #' mean(df,AGE group_by_col=SEX)
 #'
-means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TRUE, n=TRUE, missing=TRUE,
+means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TRUE, show_errors = FALSE,
+                        n=TRUE, missing=TRUE,
                        min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
                        median=TRUE, range=TRUE, norm.test = TRUE,
                        col_names = c("var","groups","n.valid","n.missing","min","max","mean","sd","median","range","shapiro-wilk")) {
+
+  if (!requireNamespace("dplyr", quietly = TRUE)) {
+    stop("Package \"dplyr\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   vars <- enquos(...)
   result_df <- list()
 
   for (v in vars) {
     vs <- quo_name(v)
     col_names_temp <- col_names
+    v.data <- df %>% select(!! v)
+    v.data <- as.data.frame(v.data)[,names(v.data)]
+
 
     # --- NO GROUPING
     if (missing("group_by_col")) {
-      # result_temp <- df[quo_name(v)] %>% summarise(
-      if ((nrow(df) < 5000) && (nrow(df) - sum(is.na(df[quo_name(v)])) > 3)) {
+      if ((nrow(df) < 5000) & ((nrow(df) - sum(is.na(v.data))) > 3)) {
+        s = tryCatch({
+                shapiro.test(v.data)$p.value
+              }, error = function(err) {
+                if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
+                return(NA)
+              }
+            )
+
         result_temp <- df %>% summarise(
           n = n()-sum(is.na(.data[[quo_name(v)]])),
-          missing = sum(is.na(.data[[quo_name(v)]])),
-          min = round(min(!! v, na.rm=TRUE), digits=decimales),
-          max = round(max(!! v, na.rm=TRUE), digits=decimales),
-          mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
-          sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
-          median = round(median(!! v, na.rm = TRUE), digits=decimales),
-          range = round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales),
-          shapiro = shapiro.test(!! v)$p.value
+          missing = ifelse(all(is.na(!! v)),0,sum(is.na(.data[[quo_name(v)]]))),
+          min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
+          max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
+          mean = ifelse(all(is.na(!! v)),NA,round(mean(!! v, na.rm = TRUE), digits=decimales)),
+          sd = ifelse(all(is.na(!! v)),NA,round(sd(!! v, na.rm = TRUE), digits=decimales)),
+          median = ifelse(all(is.na(!! v)),NA,round(median(!! v, na.rm = TRUE), digits=decimales)),
+          range = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
+          shapiro = s
         )
       } else {
+        s = tryCatch({
+                  ks.test(v.data, "pnorm", mean=mean(v.data, na.rm=TRUE), sd=sd(v.data, na.rm=TRUE))$p.value
+            }, error = function(err) {
+                  if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
+                  return(NA)
+                }
+            )
         result_temp <- df %>% summarise(
           n = n()-sum(is.na(.data[[quo_name(v)]])),
-          missing = sum(is.na(.data[[quo_name(v)]])),
-          min = round(min(!! v, na.rm=TRUE), digits=decimales),
-          max = round(max(!! v, na.rm=TRUE), digits=decimales),
-          mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
-          sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
-          median = round(median(!! v, na.rm = TRUE), digits=decimales),
-          range = round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales),
-          shapiro = ks.test(!! v, "pnorm", mean=mean(!! v, na.rm=TRUE), sd=sd(!! v, na.rm=TRUE))$p.value
+          missing = ifelse(all(!is.na(!! v)),0,sum(is.na(.data[[quo_name(v)]]))),
+          min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
+          max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
+          mean = ifelse(all(is.na(!! v)),NA,round(mean(!! v, na.rm = TRUE), digits=decimales)),
+          sd = ifelse(all(is.na(!! v)),NA,round(sd(!! v, na.rm = TRUE), digits=decimales)),
+          median = ifelse(all(is.na(!! v)),NA,round(median(!! v, na.rm = TRUE), digits=decimales)),
+          range = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
+          shapiro = s
         )
       }
 
@@ -82,10 +107,14 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     }
     else {
       agrupa <- enquos(group_by_col)
-      ff <- df %>%
-
-      if ((nrow(df) < 5000) && (nrow(df) - sum(is.na(df[quo_name(v)])) > 3)) {
-        s.test <- shapiro.test(df[,quo_name(v)])$p.value
+      if ((nrow(df) < 5000) & ((nrow(df) - sum(is.na(v.data))) > 3)) {
+        s = tryCatch({
+                shapiro.test(df[,quo_name(v)])$p.value
+              }, error = function(err) {
+                if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
+                return(NA)
+              }
+            )
         result_temp <- df %>%
                           group_by(!!! agrupa) %>%
                                 summarise(
@@ -97,10 +126,17 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
                                     sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
                                     median = round(median(!! v, na.rm = TRUE), digits=decimales),
                                     range = ifelse(all(is.na(!! v)),NA, round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
-                                    shapiro = s.test
+                                    shapiro = s
                                   )
       } else {
-        s.test <- ks.test(df[,quo_name(v)], "pnorm", mean=mena(df[,quo_name(v)]), sd=sd(df[,quo_name(v)]))$p.value
+        s = tryCatch({
+                ks.test(df[,quo_name(v)], "pnorm", mean=mean(df[,quo_name(v)], na.rm=TRUE), sd=sd(df[,quo_name(v)], na.rm=TRUE))$p.value
+              }, error = function(err) {
+                if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
+                return(NA)
+              }
+            )
+
         result_temp <- df %>%
           group_by(!!! agrupa) %>%
           summarise(
@@ -108,11 +144,11 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
             missing = ifelse(all(!is.na(!! v)),0,sum(is.na(!! v))),
             min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
             max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
-            mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
-            sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
-            median = round(median(!! v, na.rm = TRUE), digits=decimales),
+            mean = ifelse(all(is.na(!! v)),NA,round(mean(!! v, na.rm = TRUE), digits=decimales)),
+            sd = ifelse(all(is.na(!! v)),NA,round(sd(!! v, na.rm = TRUE), digits=decimales)),
+            median = ifelse(all(is.na(!! v)),NA,round(median(!! v, na.rm = TRUE), digits=decimales)),
             range = ifelse(all(is.na(!! v)),NA, round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
-            shapiro = s.test
+            shapiro = s
           )
       }
     }
@@ -156,8 +192,10 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     }
     else {
       result_temp$shapiro <- c(rep(NA,nrow(result_temp)-1),round(result_temp$shapiro[1],digits = decimales))
-      if (result_temp$shapiro < 10^((decimales+1)*-1)) result_temp$shapiro <- paste("<",as.character(10^((decimales+1)*-1)),"")
-      if(nrow(df) > 5000) col_names_temp[11] <- "kolmogorov-smirnov"
+      if(!is.na(result_temp$shapiro[1])){
+        if (result_temp$shapiro < 10^((decimales+1)*-1)) result_temp$shapiro <- paste("<",as.character(10^((decimales+1)*-1)),"")
+        if(nrow(df) > 5000) col_names_temp[11] <- "kolmogorov-smirnov"
+      }
     }
 
     # -- add a column with the name of the var being studied
