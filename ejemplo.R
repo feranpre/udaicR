@@ -1,6 +1,6 @@
 rm(list = ls())
 
-library(dplyr)
+library(udaicR)
 data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
                      HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
                      SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
@@ -10,7 +10,6 @@ data_ <- rbind(data_, list(34,NA,NA,NA))
 data_ <- rbind(data_, list(33,NA,"Male",NA))
 data_ <- rbind(data_, list(22,NA,NA,"No"))
 data_$EMPTY <- rep(NA,nrow(data_))
-
 
 
 #====================================================
@@ -46,7 +45,7 @@ freq(data_, SEX, group_by_col = BLOND, total_by_group = FALSE)
 means(data_,HEIGHT)
 
 # ---  multiple means
-means(data_, AGE, HEIGHT)
+means(data_, AGE, HEIGHT, range=FALSE)
 
 # --- means with grouping
 means(data_, AGE, HEIGHT, group_by_col = SEX)

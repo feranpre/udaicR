@@ -49,6 +49,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
          call. = FALSE)
   }
+  library(dplyr)
 
   vars <- enquos(...)
   result_df <- list()
@@ -153,6 +154,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
       }
     }
     result_temp <- as.data.frame(result_temp)
+    if (debug) print(col_names_temp)
 
     if (n == FALSE) {
       col_names_temp <- col_names_temp[-3]
@@ -189,8 +191,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     if (norm.test == FALSE) {
       col_names_temp <- col_names_temp[-11]
       result_temp$shapiro <- NULL
-    }
-    else {
+    } else {
       result_temp$shapiro <- c(rep(NA,nrow(result_temp)-1),round(result_temp$shapiro[1],digits = decimales))
       if(!is.na(result_temp$shapiro[1])){
         if (result_temp$shapiro < 10^((decimales+1)*-1)) result_temp$shapiro <- paste("<",as.character(10^((decimales+1)*-1)),"")
