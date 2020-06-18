@@ -154,7 +154,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
       }
     }
     result_temp <- as.data.frame(result_temp)
-    if (debug) print(col_names_temp)
+    # if (debug) print(col_names_temp)
 
     if (n == FALSE) {
       col_names_temp <- col_names_temp[-3]
