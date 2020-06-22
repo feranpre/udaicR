@@ -1,7 +1,7 @@
 
 
-c.means <- function(df,x,group,decimals = 2, alternative = "two.sided",
-                    debug = FALSE, decimales = 2, show.test.method = TRUE,
+c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
+                    debug = FALSE, show.test.method = TRUE,
                     conf.level = 0.95, show.warnings = TRUE) {
 
   if (!requireNamespace("dplyr", quietly = TRUE)) {
@@ -23,9 +23,9 @@ c.means <- function(df,x,group,decimals = 2, alternative = "two.sided",
     }
   }
 
-  if ((!exists("decimales")) | (is.null(decimales)) ){
-    if (show.warnings) warning("decimales is empty, using 2 default value")
-    decimales = 2
+  if ((!exists("decimals")) | (is.null(decimals)) ){
+    if (show.warnings) warning("decimals is empty, using 2 default value")
+    decimals = 2
   }
 
   if (!exists("alternative")) {
@@ -56,11 +56,11 @@ c.means <- function(df,x,group,decimals = 2, alternative = "two.sided",
   }
 
   exp1 <- rlang::expr(!! x ~ !! group)
-  df2 <- df[,c(quo_name(x),quo_name(group))] %>% group_split(!! group)
+  # df2 <- df[,c(quo_name(x),quo_name(group))] %>% group_split(!! group)
 
   levene <- var.test(eval(exp1), data =df)
-  if (levene$p.value < 10^((decimales+1)*-1)) levene$p.value <- paste("<",as.character(10^((decimales+1)*-1)),"")
-  else levene$p.value <- round(levene$p.value, digits = decimales)
+  if (levene$p.value < 10^((decimals+1)*-1)) levene$p.value <- paste("<",as.character(10^((decimals+1)*-1)),"")
+  else levene$p.value <- round(levene$p.value, digits = decimals)
 
   varianzas.iguales = ifelse(levene$p.value<0.05,TRUE,FALSE)
 
@@ -72,22 +72,22 @@ c.means <- function(df,x,group,decimals = 2, alternative = "two.sided",
   if (debug) print(temp)
 
   temp.p <- temp$p.value
-  if (temp.p < 10^((decimales+1)*-1)) temp.p <- paste("<",as.character(10^((decimales+1)*-1)),"")
-  else temp.p <- round(temp.p, digits = decimales)
+  if (temp.p < 10^((decimals+1)*-1)) temp.p <- paste("<",as.character(10^((decimals+1)*-1)),"")
+  else temp.p <- round(temp.p, digits = decimals)
 
 
   result.df <- data.frame(groups = c("",levels(df[,quo_name(group)])),
                           mean.var = c(quo_name(x),"",""),
                           n = c("", nrow(df2[[1]][,quo_name(x)]),nrow(df2[[2]][,quo_name(x)])),
                           homocedasticity.p = c(ifelse(show.test.method,levene$method,""),"",levene$p.value),
-                          t = c(ifelse(show.test.method,temp$method,""),"",round(temp$statistic,digits = decimales)),
+                          t = c(ifelse(show.test.method,temp$method,""),"",round(temp$statistic,digits = decimals)),
                           p = c("","",temp.p),
-                          means = c("",round(temp$estimate,digits = decimales)),
-                          IC95.low = c("",round(t.test(df2[[1]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimales),
-                                          round(t.test(df2[[2]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimales)
+                          means = c("",round(temp$estimate,digits = decimals)),
+                          IC95.low = c("",round(t.test(df2[[1]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimals),
+                                          round(t.test(df2[[2]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimals)
                                       ),
-                          IC95.high = c("",round(t.test(df2[[1]][,quo_name(x)])$conf.int[2],digits = decimales),
-                                           round(t.test(df2[[2]][,quo_name(x)])$conf.int[2],digits = decimales)
+                          IC95.high = c("",round(t.test(df2[[1]][,quo_name(x)])$conf.int[2],digits = decimals),
+                                           round(t.test(df2[[2]][,quo_name(x)])$conf.int[2],digits = decimals)
                                         )
                         )
   names(result.df)[8] <- paste("IC",conf.level*100,".low", sep = "")
