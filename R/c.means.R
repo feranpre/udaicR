@@ -2,7 +2,7 @@
 
 c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
                     debug = FALSE, show.test.method = TRUE,
-                    conf.level = 0.95, show.warnings = TRUE) {
+                    conf.level = 0.95, show.warnings = TRUE, is.normal = TRUE) {
 
   if (!requireNamespace("dplyr", quietly = TRUE)) {
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
@@ -70,7 +70,8 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   if (debug) print(paste("LEVENE's p:",levene))
 
 
-  temp <- t.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales, conf.level = conf.level)
+  if (is.normal) temp <- t.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales, conf.level = conf.level)
+  else temp <- wilcox.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales, conf.level = conf.level)
 
   if (debug) print(temp)
 
