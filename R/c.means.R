@@ -72,12 +72,18 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   if (debug) print(paste("LEVENE's p:",levene))
 
 
-  if (is.normal) temp <- t.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales, conf.level = conf.level)
-  else temp <- wilcox.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales, conf.level = conf.level)
+  if (is.normal) {
+    temp <- t.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales, conf.level = conf.level)
+    medias <- round(temp$estimate,digits = decimals)
+  }
+  else {
+    temp <- wilcox.test(formula = eval(exp1), data = df, alternative = alternative, var.equal = varianzas.iguales, conf.level = conf.level)
+    medias <- c("","")
+  }
 
   if (debug){
     print(temp)
-    print(paste("MEANS ->",c("",ifelse(is.normal,round(temp$estimate,digits = decimals),c("-","-")))))
+    print(paste("MEANS ->",c("",medias)))
   }
 
   temp.p <- temp$p.value
@@ -91,7 +97,7 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
                           homocedasticity.p = c(ifelse(show.test.method,levene$method,""),"",levene$p.value),
                           t = c(ifelse(show.test.method,temp$method,""),"",round(temp$statistic,digits = decimals)),
                           p = c("","",temp.p),
-                          means = c("",ifelse(is.normal,round(temp$estimate,digits = decimals),c("-","-"))),
+                          means = c("",medias),
                           IC95.low = c("",round(t.test(df2[[1]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimals),
                                           round(t.test(df2[[2]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimals)
                                       ),
