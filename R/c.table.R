@@ -31,6 +31,7 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
  x <- enquo(x)
  y <- enquo(y)
 
+ if(debug) print("Preparando tablas")
  d <- df %>% select(!! x,!! y)
  # print(d)
  t1 <- table(d[,1], d[,2])
