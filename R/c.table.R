@@ -37,6 +37,8 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
  if (debug) print(d)
 
  t1 <- table(d[,1], d[,2])
+ print(t1)
+
  t_row_prop <- round(prop.table(t1, margin = 1)*100, digits = decimals) #.. row
 
  print(t_row_prop)
