@@ -64,7 +64,7 @@ means(data_, EMPTY, group_by_col = SEX)
 #      ---- c.table -----
 #
 #=========================================================
-c.table(data_,SEX,BLOND)
+c.table(data_,SEX,BLOND, debug=TRUE)
 
 
 
