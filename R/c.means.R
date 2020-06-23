@@ -82,7 +82,7 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   else temp.p <- round(temp.p, digits = decimals)
 
 
-  result.df <- data.frame(groups = c("",levels(df[,quo_name(group)])),
+  result.df <- data.frame(groups = c("",niveles),
                           mean.var = c(quo_name(x),"",""),
                           n = c("", nrow(df2[[1]][,quo_name(x)]),nrow(df2[[2]][,quo_name(x)])),
                           homocedasticity.p = c(ifelse(show.test.method,levene$method,""),"",levene$p.value),
