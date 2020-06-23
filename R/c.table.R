@@ -19,7 +19,14 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
       call. = FALSE)
  }
-library(dplyr)
+ if (!requireNamespace("janitor", quietly = TRUE)) {
+      stop("Package \"janitor\" needed for this function to work. Please install it.",
+           call. = FALSE)
+ }
+
+
+ library(dplyr)
+ library(janitor)
 
  x <- enquo(x)
  y <- enquo(y)
