@@ -108,6 +108,10 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   names(result.df)[8] <- paste("IC",conf.level*100,".low", sep = "")
   names(result.df)[9] <- paste("IC",conf.level*100,".high", sep = "")
   row.names(result.df) <- NULL
+  if (!is.normal) {
+    result.df$means <- NULL
+    names(result.df)[names(result.df) == "t"] <- "W"
+  }
   return(result.df)
 
 }
