@@ -46,7 +46,7 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   c.group <- class(df[,quo_name(group)])
 
   if (class(c.group) != "factor"){
-    if(debug) print("Group is not a factor. Trying conversion.")
+    if(debug) print(paste("Group is not a factor. Trying conversion.(",class(c.group),")",sep = ""))
     df[,quo_name(group)] <- as.factor(df[,quo_name(group)])
   }
 
