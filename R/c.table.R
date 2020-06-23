@@ -34,9 +34,16 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
  if(debug) print("Preparando tablas")
  d <- df %>% select(!! x,!! y)
 
- if (debug) print(d)
+ if (debug) {
+    print(d)
+    print("VAR-1:")
+    print(d[,1])
+    print("VAR-2:")
+    print(d[,2])
+ }
 
  t1 <- table(d[,1], d[,2])
+
  print(t1)
 
  t_row_prop <- round(prop.table(t1, margin = 1)*100, digits = decimals) #.. row
