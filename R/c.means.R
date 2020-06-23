@@ -43,7 +43,7 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   df <- df[!is.na(df[,quo_name(group)]),]
 
   # names(df) <- c("x","group")
-  c.group <- class(df[,quo_name(group)])
+  # c.group <- class(df[,quo_name(group)])
 
   # if (class(c.group) != "factor"){
   #   if(debug) print(paste("Group is not a factor. Trying conversion.(",c.group,")",sep = ""))
@@ -51,7 +51,7 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   # }
   #
   if(is.factor(df[,quo_name(group)])) niveles <- levels(df[,quo_name(group)])
-  else niveles <- levels(as.factor(df[,quo_name(group)]))
+  else niveles <- levels(as.factor(df[, !! group]))
   if (length(niveles) != 2){
     print(paste("ERROR: Levels of group variable not equal to 2. Aborting. Levels:",niveles, " --> ", length(niveles)))
     return(NULL)
