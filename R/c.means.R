@@ -58,6 +58,9 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   exp1 <- rlang::expr(!! x ~ !! group)
   df2 <- df[,c(quo_name(x),quo_name(group))] %>% group_split(!! group)
 
+  print(df2)
+
+
   levene <- var.test(eval(exp1), data =df)
   if (levene$p.value < 10^((decimals+1)*-1)) levene$p.value <- paste("<",as.character(10^((decimals+1)*-1)),"")
   else levene$p.value <- round(levene$p.value, digits = decimals)
