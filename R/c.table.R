@@ -32,7 +32,7 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
  y <- enquo(y)
 
  if(debug) print("Preparando tablas")
- d <- df %>% select(!! x,!! y)
+ d <- as.data.frame(df %>% select(!! x,!! y))
 
  if (debug) {
     print(d)
