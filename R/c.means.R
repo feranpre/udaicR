@@ -50,8 +50,8 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   #   df[,quo_name(group)] <- as.factor(df[,quo_name(group)])
   # }
   #
-  if (length(levels(df[,quo_name(group)])) != 2){
-    print(paste("ERROR: Levels of group variable not equal to 2. Aborting. Levels:",levels(df[,quo_name(group)])))
+  if (length(levels(as.factor(df[,quo_name(group)]))) != 2){
+    print(paste("ERROR: Levels of group variable not equal to 2. Aborting. Levels:",levels(as.factor(df[,quo_name(group)]))))
     return(NULL)
   }
 
