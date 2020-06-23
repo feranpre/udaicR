@@ -45,15 +45,15 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   # names(df) <- c("x","group")
   c.group <- class(df[,quo_name(group)])
 
-  if (class(c.group) != "factor"){
-    if(debug) print(paste("Group is not a factor. Trying conversion.(",c.group,")",sep = ""))
-    df[,quo_name(group)] <- as.factor(df[,quo_name(group)])
-  }
-
-  if (length(levels(df[,quo_name(group)])) != 2){
-    print(paste("ERROR: Levels of group variable not equal to 2. Aborting. Levels:",levels(df[,quo_name(group)])))
-    return(NULL)
-  }
+  # if (class(c.group) != "factor"){
+  #   if(debug) print(paste("Group is not a factor. Trying conversion.(",c.group,")",sep = ""))
+  #   df[,quo_name(group)] <- as.factor(df[,quo_name(group)])
+  # }
+  #
+  # if (length(levels(df[,quo_name(group)])) != 2){
+  #   print(paste("ERROR: Levels of group variable not equal to 2. Aborting. Levels:",levels(df[,quo_name(group)])))
+  #   return(NULL)
+  # }
 
   exp1 <- rlang::expr(!! x ~ !! group)
   df2 <- df[,c(quo_name(x),quo_name(group))] %>% group_split(!! group)
