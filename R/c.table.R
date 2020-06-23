@@ -33,7 +33,8 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
 
  if(debug) print("Preparando tablas")
  d <- df %>% select(!! x,!! y)
- # print(d)
+
+ if (debug) print(d)
  t1 <- table(d[,1], d[,2])
  t_row_prop <- round(prop.table(t1, margin = 1)*100, digits = decimals) #.. row
  t_row_prop <- as.data.frame.matrix(t_row_prop) %>% mutate(row_totals = rowSums(.))
