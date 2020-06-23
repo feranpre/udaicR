@@ -14,11 +14,13 @@
 #'
 #' @examples
 c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals = TRUE,
-                chi = TRUE, decimals = 2){
+                chi = TRUE, decimals = 2, debug = FALSE) {
  if (!requireNamespace("dplyr", quietly = TRUE)) {
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
       call. = FALSE)
  }
+library(dplyr)
+
  x <- enquo(x)
  y <- enquo(y)
 
@@ -34,6 +36,8 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
  if (col_percent) col_per_level = col_per_level +1
  if (row_percent) col_per_level = col_per_level +1
 
+ if(debug) print("PRE loop")
+
  for (cn in 1:ncol(t1)) {
    if (!exists("result_t")) {
      result_t <- t1[,cn]
@@ -42,7 +46,9 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
    else result_t <- cbind(result_t,t1[,cn])
 
    col_name_num = cn+(col_per_level*(cn-1))
-   # print(paste(levels(as.factor(d[,2]))[cn],"n",sep = "_"))
+
+   if (debug) print(paste(colnames(t1)[cn],"n",sep = "_"))
+
    colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"n",sep = "_")
    if (col_percent) {
      result_t <- cbind(result_t,t_col_prop[,cn])
