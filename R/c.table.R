@@ -41,6 +41,15 @@ c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
  t_col_prop <- round(prop.table(t1, margin = 2)*100, digits = decimals) #.. col
  # t_col_prop <- as.data.frame.matrix(t_col_prop) %>% mutate(col_totals = colSums(.))
 
+ if (debug){
+    print("TABLES:")
+    print(t1)
+    print("-----------")
+    print(t_row_prop)
+    print("-----------")
+    print(t_col_prop)
+ }
+
  col_per_level = 0
  if (col_percent) col_per_level = col_per_level +1
  if (row_percent) col_per_level = col_per_level +1
