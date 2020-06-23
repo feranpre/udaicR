@@ -88,7 +88,7 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
                           homocedasticity.p = c(ifelse(show.test.method,levene$method,""),"",levene$p.value),
                           t = c(ifelse(show.test.method,temp$method,""),"",round(temp$statistic,digits = decimals)),
                           p = c("","",temp.p),
-                          means = c("",ifelse(is.normal,round(temp$estimate,digits = decimals),"")),
+                          means = c("",ifelse(is.normal,round(temp$estimate,digits = decimals),c("",""))),
                           IC95.low = c("",round(t.test(df2[[1]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimals),
                                           round(t.test(df2[[2]][,quo_name(x)], conf.level = conf.level)$conf.int[1],digits = decimals)
                                       ),
