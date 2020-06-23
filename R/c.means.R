@@ -58,7 +58,7 @@ c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
   exp1 <- rlang::expr(!! x ~ !! group)
   df2 <- df[,c(quo_name(x),quo_name(group))] %>% group_split(!! group)
 
-  print(df2)
+  if (debug) print(df2)
 
 
   levene <- var.test(eval(exp1), data =df)
