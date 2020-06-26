@@ -1,4 +1,4 @@
 exportPattern("^[[:alpha:]]+")
-import(dplyr)
-import(janitor)
-import(stringi)
+#importFrom(dplyr,"%>%","enquos")
+#import(janitor)
+#import(stringi)

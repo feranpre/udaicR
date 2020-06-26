@@ -20,6 +20,8 @@
 #'
 #' @return list of dataframes (1 per variable)
 #' @export
+#' @importFrom dplyr %>% enquos group_by summarise mutate select
+#' @importFrom janitor adorn_totals
 #'
 #' @examples
 #' data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
@@ -67,16 +69,18 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
   if (length(col_names) != 5 ) stop("The number of strings in 'col_names' must be 4")
   if (length(col_names_groups) != 3 ) stop("The number of strings in 'col_names_groups' must be 2")
 
-  vars <- enquos(...)
+  vars <- dplyr::enquos(...)
   result_df <- list()
+
+
 
   for (v in vars) {
 
     if (missing("group_by_col")) {
       result_temp <- df %>%
-        group_by(!! v) %>%
-          summarise(n = n()) %>%
-            mutate(rel.freq = round((n/sum(n))*100,decimals))
+                      group_by(!! v) %>%
+                        summarise(n = n()) %>%
+                          mutate(rel.freq = round((n/sum(n))*100,decimals))
       result_temp <- as.data.frame(result_temp)
 
       total_n = sum(result_temp$n[!is.na(result_temp[,1])], na.rm=T)
@@ -119,7 +123,6 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
 
         for( l in levels(as.factor(result_temp_original[,1]))) {
           r <- result_temp_original[result_temp_original[,1]==as.character(l) & !is.na(result_temp_original[,1]),]
-          # r <- r %>% adorn_totals("row", na.rm=T)
           r <- rbind(r,c("Total","-",sum(r$n),sum(r$rel.freq.group),sum(r$rel.freq, na.rm = T),sum(r$rel.freq.validos, na.rm = T)))
 
           if(!exists("result_total_by_group")) result_total_by_group <- r

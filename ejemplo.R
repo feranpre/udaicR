@@ -20,7 +20,7 @@ data_$EMPTY <- rep(NA,nrow(data_))
 
 
 # -- regular freq
-freq(data_, SEX)
+freq(data_,SEX)
 
 # -- freq sorted by Value
 freq(data_,SEX, sort_by_values = TRUE, sort_decreasing = FALSE)

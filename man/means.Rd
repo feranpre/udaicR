@@ -10,6 +10,7 @@ means(
   group_by_col = NULL,
   decimales = 2,
   show_warnings = TRUE,
+  show_errors = FALSE,
   n = TRUE,
   missing = TRUE,
   min = TRUE,
@@ -20,7 +21,7 @@ means(
   range = TRUE,
   norm.test = TRUE,
   col_names = c("var", "groups", "n.valid", "n.missing", "min", "max", "mean", "sd",
-    "median", "range", "shapiro")
+    "median", "range", "shapiro-wilk")
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ means(
 \item{decimales}{number of decimal to show}
 
 \item{show_warnings}{show warnings}
+
+\item{show_errors}{show errors}
 
 \item{n}{show n (without missing values)}
 
@@ -61,5 +64,20 @@ data.frame with the corresponding stats
 My own spin on the mean function, working as I like it
 }
 \examples{
+
+data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
+                    HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
+                    SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
+                    BLOND=sample(x = c("Yes", "No"), prob = c(.2,.8), size = 30, replace = TRUE)
+)
+data_ <- rbind(data_, list(NA,NA,NA,NA))
+data_ <- rbind(data_, list(NA,NA,"Male",NA))
+data_ <- rbind(data_, list(NA,NA,NA,"No"))
+
+means(df,AGE)
+
+means(df,AGE,HEIGHT)
+
+mean(df,AGE group_by_col=SEX)
 
 }
