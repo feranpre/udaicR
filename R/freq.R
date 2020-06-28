@@ -69,13 +69,22 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
   if (length(col_names) != 5 ) stop("The number of strings in 'col_names' must be 4")
   if (length(col_names_groups) != 3 ) stop("The number of strings in 'col_names_groups' must be 2")
 
+  # library(dplyr)
+
   vars <- dplyr::enquos(...)
   result_df <- list()
 
 
+  if(length(vars) == 0) {
+    print(length(vars))
+    #----- ONLY DATA HAS BEEN PASSED
+    print(class(df))
+    if(class(df) != "data.frame") df <- as.data.frame(df)
+    vars <- colnames(df)
+  }
 
   for (v in vars) {
-
+    # print(paste("VAR ->", v))
     if (missing("group_by_col")) {
       result_temp <- df %>%
                       group_by(!! v) %>%
@@ -93,7 +102,7 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
       if (sort_by_percent) result_temp <- result_temp[order(result_temp[,ncol(result_temp)], decreasing = sort_decreasing),]
       rownames(result_temp) <- NULL
 
-      if (total) result_temp <- result_temp %>% adorn_totals("row")
+      if (total) result_temp <- result_temp %>% janitor::adorn_totals("row")
 
     }
     else {
@@ -179,6 +188,9 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
 
     result_df[[length(result_df)+1]] <- as.data.frame(result_temp)
   }
+
+
+
 
   if (length(result_df) == 1) result_df <- result_df[[1]]
   return(result_df)
