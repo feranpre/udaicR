@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @examples
-c.table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals = TRUE,
+c_table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals = TRUE,
                 chi = TRUE, decimals = 2, debug = FALSE) {
  if (!requireNamespace("dplyr", quietly = TRUE)) {
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
