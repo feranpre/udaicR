@@ -11,8 +11,8 @@
 #'
 #' @return
 #' @export
+#' @import dplyr
 #'
-#' @examples
 c_table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals = TRUE,
                 chi = TRUE, decimals = 2, debug = FALSE) {
  if (!requireNamespace("dplyr", quietly = TRUE)) {

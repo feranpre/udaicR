@@ -2,6 +2,8 @@
 #'
 #' My own spin on the mean function, working as I like it
 #'
+#' @import dplyr
+#'
 #' @param df              data
 #' @param ...             any number of numerical variables
 #' @param group_by_col    variable to group the others by

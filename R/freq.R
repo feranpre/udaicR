@@ -2,7 +2,9 @@
 #'
 #' The freq function creates a dataframe with the frequencies of the independent values in one or more variables passed as arguments.
 #' It can also give the information grouping said variable/s by a different one
-#'
+#' @import dplyr
+#' @import rlang
+#' @importFrom janitor adorn_totals
 #' @param df data
 #' @param ...                 variables (no quotes needed)
 #' @param group_by_col        column used to group the other variables
@@ -17,12 +19,8 @@
 #' @param sort_by_percent     sort results by perecentage
 #' @param sort_decreasing     make the sorting descending
 #' @param debug               show debug information
-#'
 #' @return list of dataframes (1 per variable)
 #' @export
-#' @importFrom dplyr %>% enquos group_by summarise mutate select
-#' @importFrom janitor adorn_totals
-#'
 #' @examples
 #' data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
 #'                     HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
@@ -63,7 +61,6 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
     stop("Package \"janitor\" needed for this function to work. Please install it.",
       call. = FALSE)
  }
-
   if (debug) {print(paste("Column names: ",col_names))}
 
   if (length(col_names) != 5 ) stop("The number of strings in 'col_names' must be 4")
@@ -88,9 +85,10 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
     if (missing("group_by_col")) {
       result_temp <- df %>%
                       group_by(!! v) %>%
-                        summarise(n = n()) %>%
+                        summarise(n = n(), .groups = "keep") %>%
                           mutate(rel.freq = round((n/sum(n))*100,decimals))
       result_temp <- as.data.frame(result_temp)
+
 
       total_n = sum(result_temp$n[!is.na(result_temp[,1])], na.rm=T)
       result_temp$rel.freq.validos[!is.na(result_temp[,1])] <- round((result_temp$n[!is.na(result_temp[,1])]/total_n)*100,decimals)

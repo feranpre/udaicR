@@ -1,7 +1,6 @@
-require(stringr) # -- para regex
-
-
 #' Title
+#'
+#' @import stringr
 #'
 #' @param data              data.frame used
 #' @param string            quoted string to search for (doesn't need wildcards) "dat" will look for "data" as well as "date"
@@ -11,10 +10,10 @@ require(stringr) # -- para regex
 #' @export
 #'
 #' @examples
-find.col <- function(data, string="", show.col.number= FALSE) {
+find_col <- function(data, string="", show.col.number= FALSE) {
   if (!show.col.number) return(names(data)[grep(regex(string),names(data), ignore.case=TRUE)]  )
   return(grep(regex(string),names(data), ignore.case=TRUE))
 }
 
 
-busca.col <- find.col
+busca_col <- find_col

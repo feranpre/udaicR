@@ -2,6 +2,8 @@
 #'
 #' This function calculates the area under the curve for a density function.
 #'
+#' @import dplyr
+#'
 #' @param df
 #' @param ...               variables to be studied (no quotes)
 #' @param group_by_col      name of the variable for the grouping (if there is one)
@@ -14,7 +16,7 @@
 #' @export
 #'
 #' @examples
-riemann.sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL, max.value=NULL, debug=FALSE){
+riemann_sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL, max.value=NULL, debug=FALSE){
   if (!requireNamespace("dplyr", quietly = TRUE)) {
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
          call. = FALSE)

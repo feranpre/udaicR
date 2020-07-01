@@ -1,6 +1,25 @@
 
 
-c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
+#' Title
+#'
+#' @import dplyr
+#'
+#' @param df
+#' @param x
+#' @param group
+#' @param decimals
+#' @param alternative
+#' @param debug
+#' @param show.test.method
+#' @param conf.level
+#' @param show.warnings
+#' @param is.normal
+#'
+#' @return
+#' @export
+#'
+#' @examples
+c_means <- function(df,x,group, decimals = 2, alternative = "two.sided",
                     debug = FALSE, show.test.method = TRUE,
                     conf.level = 0.95, show.warnings = TRUE, is.normal = TRUE) {
 
