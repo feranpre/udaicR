@@ -30,18 +30,24 @@ riemann_sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
     if (missing("group_by_col")){
       if(debug) print("No groups selected")
       x <- df[,quo_name(v)]
-      if(class(x) == "difftime") x <- as.numeric(x)
-      if (missing("min.value")) temp.min = min(x,na.rm = TRUE)
-      else temp.min = min.value
+      if (length(x) > 0) {
+        if(class(x) == "difftime") x <- as.numeric(x)
+        if (missing("min.value")) temp.min = min(x,na.rm = TRUE)
+        else temp.min = min.value
 
-      if (missing("max.value")) temp.max = max(x,na.rm = TRUE)
-      else temp.max = max.value
+        if (missing("max.value")) temp.max = max(x,na.rm = TRUE)
+        else temp.max = max.value
 
-      if (missing("inc.value")) temp.increment = max(x,na.rm = TRUE) - temp.min
-      else temp.increment = inc.value
+        if (missing("inc.value")) temp.increment = max(x,na.rm = TRUE) - temp.min
+        else temp.increment = inc.value
 
-      result.df <- riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
-      if(debug) print(result.df)
+        result.df <- riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
+        if(debug) print(result.df)
+      }
+      else {
+        result.df <- data.frame(min = "-", max = "-", p.scaled = "-")
+      }
+
 
     } else {
       if(debug) print("Groups selected")
@@ -50,18 +56,23 @@ riemann_sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
 
         var.grupo <- df[,quo_name(v.grupo)]
         for (grupo in levels(var.grupo)){
+
           x <- df[var.grupo == grupo, quo_name(v)]
-          if (missing("min.value")) temp.min = min(x,na.rm = TRUE)
-          else temp.min = min.value
+          if(length(x)>0){
+            if (missing("min.value")) temp.min = min(x,na.rm = TRUE)
+            else temp.min = min.value
 
-          if (missing("max.value")) temp.max = max(x,na.rm = TRUE)
-          else temp.max = max.value
+            if (missing("max.value")) temp.max = max(x,na.rm = TRUE)
+            else temp.max = max.value
 
-          if (missing("inc.value")) temp.increment = max(x,na.rm = TRUE) - temp.min
-          else temp.increment = inc.value
+            if (missing("inc.value")) temp.increment = max(x,na.rm = TRUE) - temp.min
+            else temp.increment = inc.value
 
-          result.df.temp <- riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
-
+           result.df.temp <- riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
+          }
+          else {
+            result.df <- data.frame(min = "-", max = "-", p.scaled = "-")
+          }
           names.old <- names(result.df.temp)
           result.df.temp <- cbind(c(grupo,rep("",nrow(result.df.temp)-1)),result.df.temp)
           names(result.df.temp) <- c(quo_name(v.grupo), names.old)
@@ -72,6 +83,8 @@ riemann_sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
           }
           if(!exists("result.df")) result.df <- result.df.temp
           else result.df <- rbind(result.df, result.df.temp)
+
+
         }
         if (debug) print(result.df)
       }
