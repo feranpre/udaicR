@@ -30,7 +30,7 @@ riemann_sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
     if (missing("group_by_col")){
       if(debug) print("No groups selected")
       x <- df[,quo_name(v)]
-      if(length(x)== sum(is.na(x))){
+      if(length(x) > sum(is.na(x))){
         if(class(x) == "difftime") x <- as.numeric(x)
         if (missing("min.value")) temp.min = min(x,na.rm = TRUE)
         else temp.min = min.value
@@ -58,7 +58,7 @@ riemann_sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
         for (grupo in levels(var.grupo)){
 
           x <- df[var.grupo == grupo, quo_name(v)]
-          if(length(x)== sum(is.na(x))){
+          if(length(x) > sum(is.na(x))){
             if (missing("min.value")) temp.min = min(x,na.rm = TRUE)
             else temp.min = min.value
 
@@ -68,7 +68,7 @@ riemann_sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
             if (missing("inc.value")) temp.increment = max(x,na.rm = TRUE) - temp.min
             else temp.increment = inc.value
 
-           result.df.temp <- riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
+            result.df.temp <- riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
           }
           else {
             if(debug) print("Creating result.df")
