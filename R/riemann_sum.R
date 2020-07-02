@@ -71,7 +71,8 @@ riemann_sum <- function(df,...,group_by_col=NULL,inc.value=NULL, min.value=NULL,
            result.df.temp <- riemann.sum.basic(x, min.value = temp.min, max.value = temp.max, inc.value = temp.increment)
           }
           else {
-            result.df <- data.frame(min = "-", max = "-", p.scaled = "-")
+            if(debug) print("Creating result.df")
+            result.df.temp <- data.frame(min = "-", max = "-", p.scaled = "-")
           }
           names.old <- names(result.df.temp)
           result.df.temp <- cbind(c(grupo,rep("",nrow(result.df.temp)-1)),result.df.temp)
