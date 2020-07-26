@@ -222,4 +222,4 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
   return(result_df)
 }
 
-media <- means
+

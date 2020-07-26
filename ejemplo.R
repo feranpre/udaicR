@@ -43,6 +43,11 @@ freq(data_, SEX, group_by_col = BLOND, total_by_group = FALSE)
 
 # ---  basic mean
 means(data_,HEIGHT)
+media(data_, HEIGHT, group_var = SEX)
+media(data_, SEX)
+
+
+mtcars %>% group_by(cyl) %>% summarise(where(is.numeric))
 
 # ---  multiple means
 means(data_, AGE, HEIGHT, range=FALSE)
