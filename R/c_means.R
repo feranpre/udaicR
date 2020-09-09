@@ -1,5 +1,3 @@
-
-
 #' Title
 #'
 #' @import dplyr
@@ -132,5 +130,4 @@ c_means <- function(df,x,group, decimals = 2, alternative = "two.sided",
     names(result.df)[names(result.df) == "t"] <- "W"
   }
   return(result.df)
-
 }
