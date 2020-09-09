@@ -85,7 +85,7 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
     if (missing("group_by_col")) {
       result_temp <- df %>%
                       group_by(!! v) %>%
-                        summarise(n = n(), .groups = "keep") %>%
+                        summarise(n = n()) %>%
                           mutate(rel.freq = round((n/sum(n))*100,decimals))
       result_temp <- as.data.frame(result_temp)
 
