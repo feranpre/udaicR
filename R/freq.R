@@ -187,9 +187,6 @@ freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n
     result_df[[length(result_df)+1]] <- as.data.frame(result_temp)
   }
 
-
-
-
   if (length(result_df) == 1) result_df <- result_df[[1]]
   return(result_df)
 }
