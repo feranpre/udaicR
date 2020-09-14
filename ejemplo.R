@@ -20,7 +20,8 @@ data_$EMPTY <- rep(NA,nrow(data_))
 
 
 # -- regular freq
-freq(data_,SEX)
+udaicR::freq(data_,SEX)
+
 
 # -- freq sorted by Value
 freq(data_,SEX, sort_by_values = TRUE, sort_decreasing = FALSE)
@@ -70,6 +71,7 @@ means(data_, EMPTY, group_by_col = SEX)
 #
 #=========================================================
 c_table(data_,SEX,BLOND, debug=TRUE)
+knitr::kable(c_table(data_,SEX,BLOND))
 
 
 

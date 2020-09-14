@@ -14,7 +14,7 @@
 #' @import dplyr
 #'
 c_table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals = TRUE,
-                chi = TRUE, decimals = 2, debug = FALSE) {
+                chi = TRUE, decimals = 2, show.compact.table = TRUE, debug = FALSE) {
  if (!requireNamespace("dplyr", quietly = TRUE)) {
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
       call. = FALSE)
@@ -76,20 +76,21 @@ c_table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
 
    colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"n",sep = "_")
    if (col_percent) {
-     result_t <- cbind(result_t,t_col_prop[,cn])
-     col_name_num = col_name_num + 1
-     colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"col%",sep = "_")
+      result_t <- cbind(result_t,t_col_prop[,cn])
+      col_name_num = col_name_num + 1
+      colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"col%",sep = "_")
    }
    if (row_percent) {
-     result_t <- cbind(result_t,t_row_prop[,cn])
-     col_name_num = col_name_num + 1
-     colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"row%",sep = "_")
+      result_t <- cbind(result_t,t_row_prop[,cn])
+      col_name_num = col_name_num + 1
+      colnames(result_t)[col_name_num] <- paste(colnames(t1)[cn],"row%",sep = "_")
    }
+
  }
 
 
  #-- add Variable name Var
- var_column = c(paste(quo_name(x),levels(as.factor(d[,1])),sep = "_"),rep("",nrow(result_t)- length(levels(as.factor(d[,1])))))
+ var_column = c(paste(quo_name(x),levels(as.factor(d[,1])),sep = "__"),rep("",nrow(result_t)- length(levels(as.factor(d[,1])))))
  result_t = mutate(result_t,Variable=var_column)
  #-- take Variable_column to the front
  result_t <- result_t %>% select(Variable, everything())
@@ -116,6 +117,29 @@ c_table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
    }
  }
 
+
+
+ if (show.compact.table){
+    # print(result_t)
+    original_t <- result_t
+    total_col <- ncol(result_t)
+    percent = 0
+    result_t <- as.data.frame(original_t[1])
+    for (c in 2:total_col){
+
+       if ((percent == 0) & (c+1 <= total_col)){
+          result_t <- cbind(result_t,paste0(original_t[,c]," (",original_t[,c+1],"%)"))
+          colnames(result_t)[ncol(result_t)] <- paste0(colnames(original_t)[c],"(%)")
+          percent <- percent + 1
+       }
+       else {
+          percent = 0
+       }
+    }
+    # print(result_t)
+ }
+
+
  if (chi){
    chis <- suppressWarnings(chisq.test(t1))
    chis_under_5 <- sum(chis$expected < 5)
@@ -127,8 +151,9 @@ c_table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
 
 
  rownames(result_t)<-NULL
- colnames(result_t)[1] <- paste("Variable", quo_name(y), sep = "_")
-
+ colnames(result_t) <- paste0(quo_name(y),"__", colnames(result_t))
+ # colnames(result_t)[1] <- paste("Columns Variable", quo_name(y), sep = " ----> ")
+ colnames(result_t)[1] <- ""
 
  return(result_t)
 }
