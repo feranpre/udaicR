@@ -27,7 +27,7 @@ udaicR::freq(data_,SEX)
 freq(data_,SEX, sort_by_values = TRUE, sort_decreasing = FALSE)
 
 # -- multiple variables
-freq(data_, SEX, BLOND)
+udaicR::freq(data_, SEX, BLOND)
 
 # -- one variable grouped by another
 freq(data_, SEX, group_by_col = BLOND)
