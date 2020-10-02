@@ -82,7 +82,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
           mean = ifelse(all(is.na(!! v)),NA,round(mean(!! v, na.rm = TRUE), digits=decimales)),
           sd = ifelse(all(is.na(!! v)),NA,round(sd(!! v, na.rm = TRUE), digits=decimales)),
           median = ifelse(all(is.na(!! v)),NA,round(median(!! v, na.rm = TRUE), digits=decimales)),
-          range = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
+          range = ifelse(all(is.na(!! v)),NA,round(quantile(!! v, na.rm = TRUE)[4] - quantile(!! v, na.rm = TRUE)[2], digits=decimales)),
           shapiro = s
         )
       } else {
@@ -101,7 +101,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
           mean = ifelse(all(is.na(!! v)),NA,round(mean(!! v, na.rm = TRUE), digits=decimales)),
           sd = ifelse(all(is.na(!! v)),NA,round(sd(!! v, na.rm = TRUE), digits=decimales)),
           median = ifelse(all(is.na(!! v)),NA,round(median(!! v, na.rm = TRUE), digits=decimales)),
-          range = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
+          range = ifelse(all(is.na(!! v)),NA,round(quantile(!! v, na.rm = TRUE) - quantile(!! v, na.rm = TRUE)[2], digits=decimales)),
           shapiro = s
         )
       }
@@ -128,7 +128,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
                                     mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
                                     sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
                                     median = round(median(!! v, na.rm = TRUE), digits=decimales),
-                                    range = ifelse(all(is.na(!! v)),NA, round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
+                                    range = ifelse(all(is.na(!! v)),NA, round(quantile(!! v, na.rm = TRUE)[4] - quantile(!! v, na.rm = TRUE)[2], digits=decimales)),
                                     shapiro = s
                                   )
       } else {
@@ -150,7 +150,7 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
             mean = ifelse(all(is.na(!! v)),NA,round(mean(!! v, na.rm = TRUE), digits=decimales)),
             sd = ifelse(all(is.na(!! v)),NA,round(sd(!! v, na.rm = TRUE), digits=decimales)),
             median = ifelse(all(is.na(!! v)),NA,round(median(!! v, na.rm = TRUE), digits=decimales)),
-            range = ifelse(all(is.na(!! v)),NA, round(max(!! v, na.rm = TRUE) - min(!! v, na.rm = TRUE), digits=decimales)),
+            range = ifelse(all(is.na(!! v)),NA, round(quantile(!! v, na.rm = TRUE)[4] - quantile(!! v, na.rm = TRUE)[2], digits=decimales)),
             shapiro = s
           )
       }
