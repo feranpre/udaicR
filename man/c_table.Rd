@@ -13,6 +13,7 @@ c_table(
   show_totals = TRUE,
   chi = TRUE,
   decimals = 2,
+  show.compact.table = TRUE,
   debug = FALSE
 )
 }

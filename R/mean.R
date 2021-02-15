@@ -1,3 +1,321 @@
+
+
+
+
+
+
+#' Title media
+#'
+#' @param data                  data.frame with variables or vector
+#' @param ...                   any number of variables either as vector or as column names of data.frame see Examples
+#' @param by                    column of data.frame to sort the results by (either as VARIABLE or as "VARIABLE")
+#' @param decimales             number of decimals
+#' @param show.warnings         show warnings or not
+#' @param show.errors           show errors or not
+#'
+#' @param n                     show n (without missing values)
+#' @param missing               show number of missing values
+#' @param min                   show min value (or NA)
+#' @param max                   show max value (or NA)
+#' @param mean                  show mean value
+#' @param sd                    show standard deviation
+#' @param median                show median
+#' @param IQR                   show interquantile range
+#' @param norm.test             show normality test
+#' @param result.as.data.frame  return result as a data.frame or as a list
+#'
+#' @return                      data.frame (or list) with result/s
+#' @export
+#'
+#' @examples
+#'
+#' data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
+#'                     HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
+#'                     SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
+#'                     BLOND=sample(x = c("Yes", "No"), prob = c(.2,.8), size = 30, replace = TRUE)
+#' )
+#' data_ <- rbind(data_, list(NA,NA,NA,NA))
+#' data_ <- rbind(data_, list(NA,NA,"Male",NA))
+#' data_ <- rbind(data_, list(NA,NA,NA,"No"))
+#'
+#' media(df$AGE)
+#'
+#' media(df$AGE, df$HEIGHT)
+#'
+#' media(df,AGE)
+#' media(df,AGE,HEIGHT)
+#'
+#' media(df,"AGE")
+#' media(df,"AGE","HEIGHT")
+#'
+#' media(df,AGE, by=SEX)
+#'
+#'
+#'
+media <- function(data, ..., by = NULL, decimales=2, show.warnings = TRUE, show.errors = TRUE, DEBUG = TRUE,
+                  n=TRUE, missing=TRUE,
+                  min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
+                  median=TRUE, IQR=TRUE, norm.test = TRUE, result.as.data.frame = TRUE) {
+
+
+  errores.fer <- c("MISSING_VAR" = "no se ha indicado 'variable'",
+                   "DATA_TYPE" = "el primer parámetro debe ser un data.frame, o un vector de datos",
+                   "MISSING_DATA" = "'variable' se ha indicado como texto sin pasar base de datos en 'data'",
+                   "MISSING_IN_DATA.FRAME" = " no existe en la base de datos" # hay que pegarle antes el nombre de la variable
+  )
+  if (!requireNamespace("dplyr", quietly = TRUE)) {
+    stop("Package \"dplyr\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+  library(dplyr)
+
+  #=================================================
+  # CHEKING ARGS
+  #=================================================
+  #-- data must EXIST and be either a data.frame or a numeric vector
+  if(missing(data)){
+    if (show.errors) stop(errores.fer["MISSING_DATA"]) # if var is a char data is MANDATORY
+    else return("Error")
+  }
+
+  if((!is.numeric(data)) & (class(data) != "data.frame")){
+    if (show.errors) stop(errores.fer["DATA_TYPE"])
+    else return("Error")
+  }
+
+  #=================================================
+  # INIT VARS
+  #=================================================
+  result_temp <- list()
+  vars <- enquos(...)
+  vars.num <- length(vars)
+
+
+
+  #=================================================
+  # ARGS ARE VECTORS
+  #=================================================
+  #-- if data is not a data frame and there are more variables those must be vectors too
+  if (!is.data.frame(data)) {
+    m <- .do.means(data, show.errors = show.errors, DEBUG=DEBUG,decimales=decimales, n=n, missing=missing,
+                      min=min, max=max , mean=mean, sd=sd,
+                      median=median, IQR=IQR, norm.test=norm.test)
+
+
+    var.name <- deparse(substitute(data))
+    if (grep("$",var.name, fixed=TRUE) == 1) m$var <- sub(".*\\$","",var.name)
+    else m$var <- var.name
+
+    result_temp[[1]] <- m
+    rm(list = "m")
+
+    #------------------------- MORE THAN 1 VECTOR
+    if (vars.num > 0) {
+      count = 1
+      for(v in list(...)) {
+        m <- .do.means(v, show.errors = show.errors, DEBUG=DEBUG,decimales=decimales, n=n, missing=missing,
+                                                              min=min, max=max , mean=mean, sd=sd,
+                                                              median=median, IQR=IQR, norm.test=norm.test)
+
+        if (grep("$",vars[count], fixed=TRUE) == 1) m$var <- sub(".*\\$","",vars[count])
+        else m$var <- vars[count]
+
+        result_temp[[length(result_temp) + 1]] <- m
+
+        count = count + 1
+        rm(list = "m")
+      }
+      rm(list = "count")
+    }
+  }
+  #=================================================
+  # THERE IS A DATA.FRAME
+  #=================================================
+  #-- if data is a data.frame vars must be valid
+  else {
+    for(v in vars) {
+      vs <- quo_name(v)
+
+      # ------- NOT IN DATA.FRAME
+      if(!(vs %in% names(data))){
+        if (show.errors) stop(paste(vs,errores.fer["MISSING_IN_DATA.FRAME"]))
+        else result_temp[[length(result_temp)+1]] <- "Error"
+      }
+      # ------- IN DATA.FRAME
+      else {
+
+        m <- .do.means(data %>% select(!! v), show.errors = show.errors, DEBUG=DEBUG,decimales=decimales, n=n, missing=missing,
+                      min=min, max=max , mean=mean, sd=sd,
+                      median=median, IQR=IQR, norm.test=norm.test)
+        m$var <- vs
+
+
+        by <- quo_name(enquo(by))
+        if (by != "NULL") {
+          m$cat <- ""
+          m$cat.total <- m$n + m$missing
+          m <- m[,c(1,ncol(m)-1, ncol(m),2:(ncol(m)-2))]
+
+          datos <- data[,c(by,vs)]
+
+          for (l in levels(as.factor(datos[,1]))){
+            ml <- .do.means(datos[((datos[,1] == l) & (!is.na(datos[,1]))), 2], show.errors = show.errors, DEBUG=DEBUG,decimales=decimales, n=n, missing=missing,
+                                          min=min, max=max , mean=mean, sd=sd,
+                                          median=median, IQR=IQR, norm.test=norm.test)
+
+            ml$var <- vs
+            ml$cat <- l
+            ml$cat.total <- ml$n + ml$missing
+            m <- rbind(m,ml)
+            rm(list = "ml")
+          }
+
+          if (sum(is.na(datos[,1]), na.rm = TRUE) > 0) {
+            ml <- .do.means(datos[is.na(datos[,1]), 2], show.errors = show.errors, DEBUG=DEBUG,decimales=decimales, n=n, missing=missing,
+                           min=min, max=max , mean=mean, sd=sd,
+                           median=median, IQR=IQR, norm.test=norm.test)
+
+            ml$var <- vs
+            ml$cat <- "NA"
+            ml$cat.total <- ml$n + ml$missing
+            m <- rbind(m,ml)
+          }
+        }
+        result_temp[[length(result_temp) + 1]] <- m
+        rm(list = "m")
+      }
+    } #--for
+  }
+
+  if(result.as.data.frame){
+    for(r in 1:length(result_temp)) {
+      if (r == 1) {
+        result_temp.data <- as.data.frame(result_temp[[1]])
+      } else {
+        result_temp.data <- rbind(result_temp.data, rep("---", ncol(result_temp.data)))
+        result_temp.data <- rbind(result_temp.data, result_temp[[r]])
+      }
+    }
+  } else result_temp.data <- result_temp
+
+
+  return(result_temp.data)
+}
+
+
+
+
+
+
+#' Title do.means
+#'
+#' This is the function that does the calculation per se
+#'
+#' @param variable
+#' @param show.errors
+#' @param DEBUG
+#' @param decimales
+#' @param n
+#' @param missing
+#' @param min
+#' @param max
+#' @param mean
+#' @param sd
+#' @param median
+#' @param IQR
+#' @param norm.test
+#'
+#' @return
+#' @export
+#'
+#' @examples
+.do.means <- function(variable, show.errors = FALSE, DEBUG = TRUE, decimales=2,
+                     n=TRUE, missing=TRUE,
+                     min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
+                     median=TRUE, IQR=TRUE, norm.test = TRUE) {
+
+  var.name <- quo_name(enquo(variable))
+
+  # ----- try variable class
+  var.class <- tryCatch({
+    class(variable)
+  }, warning = function(war) {
+    return("NA")
+  }, error = function(err) {
+    if (show.errors) print(paste("ERROR udaicR::means ->",err))
+    return("NA")
+  }
+  )
+
+
+  # ----- try variable length
+  var.length <- tryCatch({
+    length(variable)
+  }, warning = function(war) {
+    return(NA)
+  }, error = function(err) {
+    if (show.errors) print(paste("ERROR udaicR::means ->",err))
+    return(0)
+  }
+  )
+
+
+  if (is.data.frame(variable)){
+    variable <- variable[,1]
+  }
+  if(!is.numeric(variable)) {
+    return(as.data.frame(VAR="Error, not numeric"))
+  }
+
+  var.data <- variable
+
+  total <- data.frame(VAR = var.data) %>% summarise(n = n()-sum(is.na(VAR)))
+
+  result_temp <- as.data.frame(data.frame(VAR = var.data) %>% summarise(var = var.name))
+  if(n) result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(n = n()-sum(is.na(VAR))))
+  if(missing) result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(missing = ifelse(all(!is.na(VAR)),0,sum(is.na(VAR)))))
+  if(min) result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(min = ifelse(all(is.na(VAR)),NA,round(min(VAR, na.rm=TRUE), digits=decimales))))
+  if(max) result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(max = ifelse(all(is.na(VAR)),NA,round(max(VAR, na.rm=TRUE), digits=decimales))))
+  if(mean) result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(mean = ifelse(all(is.na(VAR)),NA,round(mean(VAR, na.rm = TRUE), digits=decimales))))
+  if(sd) result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(sd = ifelse(all(is.na(VAR)),NA,round(sd(VAR, na.rm = TRUE), digits=decimales))))
+  if(median) result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(median = ifelse(all(is.na(VAR)),NA,round(median(VAR, na.rm = TRUE), digits=decimales))))
+  if(IQR) result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(IQR = ifelse(all(is.na(VAR)),NA, round(quantile(VAR, na.rm = TRUE)[4] - quantile(VAR, na.rm = TRUE)[2], digits=decimales))))
+
+  if(norm.test) {
+    if ((total < 5000) & (total >= 3)) {
+      s <- shapiro.test(var.data)$p.value
+      if (s < 0.001) s = "<0.001"
+      else s = round(s,digits = decimales)
+      norm.test.name <- "Shapiro-Wilks"
+      s <- paste(s," S-W")
+      result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(norm.test = s))
+    } else if (total >= 4) {
+      s <- nortest::lillie.test(var.data)$p.value
+      if (s < 0.001) s = "<0.001"
+      else s = round(s,digits = decimales)
+      norm.test.name <- "K-S (Lilliefors)"
+      s <- paste(s," K-S (Lillie)")
+      result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(norm.test = s))
+    } else {
+      s <- "Error"
+      result_temp <- cbind(result_temp, data.frame(VAR = var.data) %>% summarise(norm.test = s))
+
+    }
+  }
+
+  print_ <- function(){
+    print("SADFDSAFDSAFDSA")
+  }
+  return(result_temp)
+
+}
+
+
+
+#' =============================================================
+#'  TO BE REMOVED: this is here just for compatibility
+#' =============================================================
+#'
 #' Title means
 #'
 #' My own spin on the mean function, working as I like it
@@ -42,16 +360,18 @@
 #' mean(df,AGE group_by_col=SEX)
 #'
 means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TRUE, show_errors = FALSE,
-                        n=TRUE, missing=TRUE,
-                       min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
-                       median=TRUE, range=TRUE, norm.test = TRUE,
-                       col_names = c("var","groups","n.valid","n.missing","min","max","mean","sd","median","range","shapiro-wilk")) {
+                  n=TRUE, missing=TRUE,
+                  min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
+                  median=TRUE, range=TRUE, norm.test = TRUE,
+                  col_names = c("var","groups","n.valid","n.missing","min","max","mean","sd","median","range","shapiro-wilk")) {
 
   if (!requireNamespace("dplyr", quietly = TRUE)) {
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
          call. = FALSE)
   }
   library(dplyr)
+
+  if(show_warnings) .Deprecated("medias")
 
   vars <- enquos(...)
   result_df <- list()
@@ -67,12 +387,12 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
     if (missing("group_by_col")) {
       if ((nrow(df) < 5000) & ((nrow(df) - sum(is.na(v.data))) > 3)) {
         s = tryCatch({
-                shapiro.test(v.data)$p.value
-              }, error = function(err) {
-                if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
-                return(NA)
-              }
-            )
+          shapiro.test(v.data)$p.value
+        }, error = function(err) {
+          if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
+          return(NA)
+        }
+        )
 
         result_temp <- df %>% summarise(
           n = n()-sum(is.na(.data[[quo_name(v)]])),
@@ -87,12 +407,12 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
         )
       } else {
         s = tryCatch({
-                  ks.test(v.data, "pnorm", mean=mean(v.data, na.rm=TRUE), sd=sd(v.data, na.rm=TRUE))$p.value
-            }, error = function(err) {
-                  if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
-                  return(NA)
-                }
-            )
+          ks.test(v.data, "pnorm", mean=mean(v.data, na.rm=TRUE), sd=sd(v.data, na.rm=TRUE))$p.value
+        }, error = function(err) {
+          if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
+          return(NA)
+        }
+        )
         result_temp <- df %>% summarise(
           n = n()-sum(is.na(.data[[quo_name(v)]])),
           missing = ifelse(all(!is.na(!! v)),0,sum(is.na(.data[[quo_name(v)]]))),
@@ -112,33 +432,33 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
       agrupa <- enquos(group_by_col)
       if ((nrow(df) < 5000) & ((nrow(df) - sum(is.na(v.data))) > 3)) {
         s = tryCatch({
-                shapiro.test(df[,quo_name(v)])$p.value
-              }, error = function(err) {
-                if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
-                return(NA)
-              }
-            )
+          shapiro.test(df[,quo_name(v)])$p.value
+        }, error = function(err) {
+          if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
+          return(NA)
+        }
+        )
         result_temp <- df %>%
-                          group_by(!!! agrupa) %>%
-                                summarise(
-                                    n = n()-sum(is.na(!! v)),
-                                    missing = ifelse(all(!is.na(!! v)),0,sum(is.na(!! v))),
-                                    min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
-                                    max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
-                                    mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
-                                    sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
-                                    median = round(median(!! v, na.rm = TRUE), digits=decimales),
-                                    range = ifelse(all(is.na(!! v)),NA, round(quantile(!! v, na.rm = TRUE)[4] - quantile(!! v, na.rm = TRUE)[2], digits=decimales)),
-                                    shapiro = s
-                                  )
+          group_by(!!! agrupa) %>%
+          summarise(
+            n = n()-sum(is.na(!! v)),
+            missing = ifelse(all(!is.na(!! v)),0,sum(is.na(!! v))),
+            min = ifelse(all(is.na(!! v)),NA,round(min(!! v, na.rm=TRUE), digits=decimales)),
+            max = ifelse(all(is.na(!! v)),NA,round(max(!! v, na.rm=TRUE), digits=decimales)),
+            mean = round(mean(!! v, na.rm = TRUE), digits=decimales),
+            sd = round(sd(!! v, na.rm = TRUE), digits=decimales),
+            median = round(median(!! v, na.rm = TRUE), digits=decimales),
+            range = ifelse(all(is.na(!! v)),NA, round(quantile(!! v, na.rm = TRUE)[4] - quantile(!! v, na.rm = TRUE)[2], digits=decimales)),
+            shapiro = s
+          )
       } else {
         s = tryCatch({
-                ks.test(df[,quo_name(v)], "pnorm", mean=mean(df[,quo_name(v)], na.rm=TRUE), sd=sd(df[,quo_name(v)], na.rm=TRUE))$p.value
-              }, error = function(err) {
-                if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
-                return(NA)
-              }
-            )
+          ks.test(df[,quo_name(v)], "pnorm", mean=mean(df[,quo_name(v)], na.rm=TRUE), sd=sd(df[,quo_name(v)], na.rm=TRUE))$p.value
+        }, error = function(err) {
+          if (show_errors) print(paste("\n ERROR udaicR::means ->",err))
+          return(NA)
+        }
+        )
 
         result_temp <- df %>%
           group_by(!!! agrupa) %>%
@@ -221,5 +541,3 @@ means <- function(df, ... , group_by_col = NULL, decimales=2, show_warnings = TR
   if (length(result_df) == 1) result_df <- result_df[[1]]
   return(result_df)
 }
-
-

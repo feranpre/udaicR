@@ -2,7 +2,9 @@
 % Please edit documentation in R/mean.R
 \name{means}
 \alias{means}
-\title{Title means}
+\title{=============================================================
+ TO BE REMOVED: this is here just for compatibility
+=============================================================}
 \usage{
 means(
   df,
@@ -61,6 +63,9 @@ means(
 data.frame with the corresponding stats
 }
 \description{
+Title means
+}
+\details{
 My own spin on the mean function, working as I like it
 }
 \examples{

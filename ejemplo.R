@@ -12,6 +12,26 @@ data_ <- rbind(data_, list(22,NA,NA,"No"))
 data_$EMPTY <- rep(NA,nrow(data_))
 
 
+
+media(data_$AGE)
+media(data_$AGE, data_$HEIGHT)
+media(data_, AGE)
+media(data_, "AGE")
+
+media(data_, AGE, HEIGHT)
+media(data_, "AGE", "HEIGHT")
+
+media(data_, AGE,HEIGHT, by="SEX")
+media(data_, AGE,HEIGHT, by=SEX)
+media(data_, AGE,HEIGHT, by=SEX, result.as.data.frame = F)
+
+
+media(AGE, data = data_, mean=F)
+media(AGE, data = data_, mean=F, by="SEXO")
+media("DATOS",data = data_)
+
+
+
 #====================================================
 #
 #  ---- FREQUENCIES ----
@@ -44,6 +64,7 @@ freq(data_, SEX, group_by_col = BLOND, total_by_group = FALSE)
 
 # ---  basic mean
 means(data_,HEIGHT)
+means(data_,HEIGHT, show_warnings = FALSE)
 media(data_, HEIGHT, group_var = SEX)
 media(data_, SEX)
 
@@ -81,3 +102,5 @@ knitr::kable(c_table(data_,SEX,BLOND))
 #
 #=========================================================
 c_means(data_,HEIGHT,BLOND)
+
+
