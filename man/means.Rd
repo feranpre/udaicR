@@ -79,10 +79,10 @@ data_ <- rbind(data_, list(NA,NA,NA,NA))
 data_ <- rbind(data_, list(NA,NA,"Male",NA))
 data_ <- rbind(data_, list(NA,NA,NA,"No"))
 
-means(df,AGE)
+means(data_, AGE)
 
-means(df,AGE,HEIGHT)
+means(data_, AGE,HEIGHT)
 
-mean(df,AGE group_by_col=SEX)
+mean(data_, AGE, group_by_col=SEX)
 
 }

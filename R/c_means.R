@@ -1,3 +1,18 @@
+c.means <- function(df,x,group, decimals = 2, alternative = "two.sided",
+                    debug = FALSE, show.test.method = TRUE,
+                    conf.level = 0.95, show.warnings = TRUE, is.normal = TRUE) {
+
+  if ((alternative != "two.sided") | (alternative != "left") | (alternative != "right")){
+    if (show.warnings) warning("Hypothesis testing is not valid (two.sided, left or right, defaulting to two.sided")
+    alternative = "two.sided"
+  }
+
+
+
+}
+
+
+
 #' Title
 #'
 #' @import dplyr
@@ -25,34 +40,6 @@ c_means <- function(df,x,group, decimals = 2, alternative = "two.sided",
     stop("Package \"dplyr\" needed for this function to work. Please install it.",
          call. = FALSE)
   }
-
-  if (!exists("conf.level")) {
-    if (show.warnings) warning("conf.level is empty, using 0.95 default value")
-    conf.level = 0.95
-  } else {
-    if (conf.level >= 1) {
-      if (show.warnings) warning("conf.level is 1, using 0.95 default value")
-      conf.level = 0.95
-    }
-    else if (conf.level <= 0) {
-      if (show.warnings) warning("conf.level is 0, using 0.95 default value")
-      conf.level = 0.95
-    }
-  }
-
-  if ((!exists("decimals")) | (is.null(decimals)) ){
-    if (show.warnings) warning("decimals is empty, using 2 default value")
-    decimals = 2
-  }
-
-  if (!exists("alternative")) {
-    if (show.warnings) warning("alternative hypothesis is empty, using 'two.sided' default value")
-    alternative = "two.sided"
-  } else if ((alternative != "two.sided") & (alternative != "greater") & (alternative != "less")) {
-    if (show.warnings) warning('alternative parameter was used but with incorrect option. Options available are: "two.sided","greater","less". Defaulting to "two.sided"')
-    alternative = "two.sided"
-  }
-
 
   x <- rlang::sym(rlang::as_label(rlang::enquo(x)))
   group <- rlang::sym(rlang::as_label(rlang::enquo(group)))
