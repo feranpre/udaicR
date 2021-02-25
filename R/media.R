@@ -16,7 +16,7 @@
 #' @param lang               languanje for texts and labels ("en" or "es")
 #' @param show.help          logical parameter that, if true, will prompt an interpretation text before the result as an interpretation aid
 #'
-#' @importFrom rlang .data
+# @importFrom rlang .data
 #' @import dplyr
 #' @export
 media <- function(data, by = NULL, decimals = 2, show_warnings = TRUE, show_errors = FALSE,
@@ -179,7 +179,7 @@ media.data.frame <- function(data, by = NULL, decimals = 2, DEBUG = FALSE){
         sd=round(sd(df[,1], na.rm = TRUE),digits = decimals),
         median=round(median(df[,1], na.rm = TRUE),digits = decimals),
         IQR=round(IQR(df[,1], na.rm = TRUE),digits = decimals),
-        normal = udaicR::is.normal(df[,1])
+        normal = udaicR::is_normal(df[,1])
       )
     }
   } else result <- NA

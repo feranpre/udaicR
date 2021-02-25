@@ -8,11 +8,13 @@ Description: This is meant to be a compilation of the things I use the most, so 
 License: Don't know yet
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Imports:
     janitor,
     stringi,
     magrittr
 Depends: 
-    dplyr
-
+    dplyr,
+    janitor,
+    stringi,
+    magrittr

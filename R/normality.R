@@ -221,6 +221,7 @@ norm.test <- function(variable, to.numeric = TRUE, decimals = 2, method = "auto"
   return(r)
 }
 
+#' @export
 print.udaicR.norm <- function(obj){
   cat("Variable:   ",obj$var," \n")
   cat("Test:       ",obj$method," \n")
@@ -247,7 +248,7 @@ print.udaicR.norm <- function(obj){
 #'
 #' is.normal(c(1,76,3,2,1,23,5,64,234,12,3,43,2324,54,45,223,341,213,2,4323,24,3,54,54,56,76,7,55,3,2323))
 #'
-is.normal <- function(variable, show.warnings = FALSE, decimals = 2, DEBUG = FALSE){
+is_normal <- function(variable, show.warnings = FALSE, decimals = 2, DEBUG = FALSE){
     norm <- tryCatch({
       norm.test(variable, show.warnings = show.warnings, decimals = decimals)
     }, warning = function(warn) {
@@ -268,7 +269,7 @@ is.normal <- function(variable, show.warnings = FALSE, decimals = 2, DEBUG = FAL
     return(result)
 }
 
-
+#' @export
 print.udaicR.is.normal <- function(obj)
 {
   clase <- class(obj)
