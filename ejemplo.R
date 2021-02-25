@@ -1,6 +1,6 @@
 rm(list = ls())
 
-library(udaicR)
+# library(udaicR)
 data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
                      HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
                      SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
@@ -11,6 +11,75 @@ data_ <- rbind(data_, list(33,NA,"Male",NA))
 data_ <- rbind(data_, list(22,NA,NA,"No"))
 data_$EMPTY <- rep(NA,nrow(data_))
 
+load("DATOS.RData")
+
+media(DATOS$IMC)
+media(DATOS)
+#====================================================
+#
+#  ---- is.normal ----
+#
+#====================================================
+is.normal(data_$AGE)
+is.normal(12:92)
+
+c <- is.normal(data_$AGE)
+
+print(class(is.normal(data_$AGE)))
+if (is.normal(data_$HEIGHT)) {
+  print("T")
+} else {
+  print("F")
+  }
+
+norm.test(data_$AGE, show.interpretation = TRUE, lang = "es")
+norm.test(data_$AGE, show.interpretation = TRUE, lang = "es", method="lillie")
+norm.test(data_$HEIGHT, show.interpretation = TRUE, lang = "es")
+
+norm.test(data_$AGE, show.interpretation = TRUE)
+norm.test(data_$HEIGHT, show.interpretation = TRUE)
+
+norm.test(data_$AGE, show.theory = TRUE, lang = "es")
+n <- norm.test(40:70)
+
+
+#====================================================
+#
+#  ---- MEDIA ----
+#
+#====================================================
+
+summarise_if(data_, is.numeric, list(~ mean(.x,na.rm=T),
+                                     ~ sd(.x,na.rm=T),
+                                     ~ median(.x,na.rm=T),
+                                     ~ IQR(.x,na.rm=T)
+                                     ),
+             )
+
+data_ %>% select(AGE)
+psych::describe(data_ %>% select(AGE))
+
+data_ %>% select(AGE) %>% summarise(mean = mean(.data[[1]],na.rm=T),
+                                    sd =  sd(.x[[1]],na.rm=T),
+                                    median =  median(.x[[1]],na.rm=T),
+                                    IQR = IQR(.data[[1]],na.rm=T)
+
+                                             )
+
+
+
+data_ %>% select(AGE,SEX) %>%
+  group_by(SEX) %>% summarize(
+  n = n()-sum(is.na(data_[,1])),
+  missing = sum(is.na(data_[,1])),
+  min=min(data_[,1], na.rm = TRUE),
+  max=max(data_[,1], na.rm = TRUE),
+  mean=round(mean(data_[,1], na.rm = TRUE), digits = 2),
+  sd=round(sd(data_[,1], na.rm = TRUE),digits = 2),
+  median=median(data_[,1], na.rm = TRUE),
+  IQR=IQR(data_[,1], na.rm = TRUE),
+  normal=round(shapiro.test(data_[,1])$p.value, digits = 3)
+)
 
 
 media(data_$AGE)
@@ -103,4 +172,24 @@ knitr::kable(c_table(data_,SEX,BLOND))
 #=========================================================
 c_means(data_,HEIGHT,BLOND)
 
+
+
+
+#========================================================
+#
+#      ---- correlation -----
+#
+#=========================================================
+correlation(data_$AGE, data_$HEIGHT, lang="es")
+correlation(data_, AGE, HEIGHT)
+correlation(data_, "AGE", "HEIGHT")
+correlation(data_[,c("AGE", "HEIGHT")], show.warnings = F, method = "pearson")
+udaicR::correlation(data_, show.warnings = T, method = "pearson")
+
+correlation()
+
+data("mtcars")
+(c <- correlation(mtcars))
+c
+c$theory.text
 
