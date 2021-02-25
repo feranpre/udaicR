@@ -3,7 +3,7 @@
 #' The freq function creates a dataframe with the frequencies of the independent values in one or more variables passed as arguments.
 #' It can also give the information grouping said variable/s by a different one
 #' @import dplyr
-#' @import rlang
+# @import rlang
 #' @importFrom janitor adorn_totals
 #' @param df data
 #' @param ...                 variables (no quotes needed)

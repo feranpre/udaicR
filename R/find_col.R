@@ -1,6 +1,6 @@
 #' Title
 #'
-#' @import stringr
+# @import stringr
 #'
 #' @param data              data.frame used
 #' @param string            quoted string to search for (doesn't need wildcards) "dat" will look for "data" as well as "date"

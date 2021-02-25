@@ -25,8 +25,8 @@ c_table <- function(df,x,y, col_percent = TRUE, row_percent = FALSE, show_totals
  }
 
 
- library(dplyr)
- library(janitor)
+ # library(dplyr)
+ # library(janitor)
 
  x <- enquo(x)
  y <- enquo(y)
