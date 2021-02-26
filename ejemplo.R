@@ -14,7 +14,8 @@ data_$EMPTY <- rep(NA,nrow(data_))
 load("DATOS.RData")
 
 media(DATOS$IMC)
-media(DATOS)
+media(DATOS, variables = c("IMC","EDAD"), by="SEXO", DEBUG = T)
+media(DATOS, variables = c("IMC","EDAD"), DEBUG = T)
 #====================================================
 #
 #  ---- is.normal ----

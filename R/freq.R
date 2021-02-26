@@ -22,6 +22,8 @@
 #' @return list of dataframes (1 per variable)
 #' @export
 #' @examples
+#' \dontrun{
+#'
 #' data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
 #'                     HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
 #'                     SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
@@ -48,7 +50,7 @@
 #' # -- one variable grouped by another, without groups totals
 #' freq(data_, SEX, group_by_col = BLOND, total_by_group = FALSE)
 #'
-#'
+#' }
 freq <- function(df,..., group_by_col = NULL, col_names=c("Variable","Values","n","rel.freq","rel.valid.freq"), col_names_groups=c("grouping.by", "groups","rel.group.freq"),
                  decimals=2, show_warnings = TRUE, total=TRUE, total_by_group = TRUE,
                  sort_by_values=FALSE, sort_by_freq=FALSE, sort_by_percent=FALSE, sort_decreasing = TRUE,

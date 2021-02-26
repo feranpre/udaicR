@@ -3,7 +3,7 @@
 \name{is_normal}
 \alias{is_normal}
 \title{Check for normality
-is.normal() gives a TRUE/FALSE value based on normality test of the variable.}
+is_normal() gives a TRUE/FALSE value based on normality test of the variable.}
 \usage{
 is_normal(variable, show.warnings = FALSE, decimals = 2, DEBUG = FALSE)
 }
@@ -17,10 +17,10 @@ logical value (TRUE/FALSE)
 }
 \description{
 Check for normality
-is.normal() gives a TRUE/FALSE value based on normality test of the variable.
+is_normal() gives a TRUE/FALSE value based on normality test of the variable.
 }
 \examples{
 
-is.normal(c(1,76,3,2,1,23,5,64,234,12,3,43,2324,54,45,223,341,213,2,4323,24,3,54,54,56,76,7,55,3,2323))
+is_normal(rnorm(100))
 
 }

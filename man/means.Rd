@@ -70,6 +70,8 @@ My own spin on the mean function, working as I like it
 }
 \examples{
 
+\dontrun{
+
 data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
                     HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
                     SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
@@ -84,5 +86,7 @@ means(data_, AGE)
 means(data_, AGE,HEIGHT)
 
 mean(data_, AGE, group_by_col=SEX)
+
+}
 
 }

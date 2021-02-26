@@ -236,7 +236,7 @@ print.udaicR.norm <- function(obj){
 
 
 #' Check for normality
-#' is.normal() gives a TRUE/FALSE value based on normality test of the variable.
+#' is_normal() gives a TRUE/FALSE value based on normality test of the variable.
 #'
 #' @param variable       vector of values (ideally numbers)
 #' @param show.warnings  Default FALSE. Whether or not you want to get possible warnings
@@ -246,7 +246,7 @@ print.udaicR.norm <- function(obj){
 #'
 #' @examples
 #'
-#' is.normal(c(1,76,3,2,1,23,5,64,234,12,3,43,2324,54,45,223,341,213,2,4323,24,3,54,54,56,76,7,55,3,2323))
+#' is_normal(rnorm(100))
 #'
 is_normal <- function(variable, show.warnings = FALSE, decimals = 2, DEBUG = FALSE){
     result <- tryCatch({
@@ -267,12 +267,12 @@ is_normal <- function(variable, show.warnings = FALSE, decimals = 2, DEBUG = FAL
 
 
     #--- this is my trick to return a logical value and yet make a better print function that includes the vector name passed
-    class(result) <- append(class(result), c(var.name, "udaicR.is.normal"))
+    class(result) <- append(class(result), c(var.name, "udaicR.is_normal"))
     return(result)
 }
 
 #' @export
-print.udaicR.is.normal <- function(obj)
+print.udaicR.is_normal <- function(obj)
 {
   clase <- class(obj)
   result <- clase[length(clase)-1] #--- getting the variable name from the class (we put it there in the is.normal function)

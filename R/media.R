@@ -1,4 +1,24 @@
+#' @usage
+#' --- using data as a data.frame ---
+#' media(data.frame)
+#'
+#' 'variables' must be valid columns of the data.frame
+#' media(data.frame, variables = c("var1","var2"))
+#'
+#' 'by' must be a valid variable of the data.frame
+#' media(data.frame, by = "var1", ...)
+#'
+#' 'by' must have the same length (and order) than the data.frame
+#' media(data.frame, by = vector)
+#'
+#' --- using data as a numeric vector ---
+#' media(numeric.vector)
+#'
+#' 'by' must a vector with the same length as 'data' numeric vector
+#' media(numeric.vector, by = vector)
+#'
 #' @param data               either a vector or a data.frame with all the variables
+#' @param variables          name/s of varible/s of 'data' data.frame
 #' @param by                 either a string with the data.frame variable name or a vector with the categories
 #' @param decimals           number of decimal to show
 #' @param show.warnings      show warnings
@@ -19,7 +39,13 @@
 # @importFrom rlang .data
 #' @import dplyr
 #' @export
-media <- function(data, by = NULL, decimals = 2, show_warnings = TRUE, show_errors = FALSE,
+#'
+#' @example
+#' \dontrun{
+#'
+#' }
+#'
+media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = TRUE, show_errors = FALSE,
                   n=TRUE, missing=TRUE,
                   min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
                   median=TRUE, IQR=TRUE, norm.test = TRUE,
@@ -32,13 +58,11 @@ media <- function(data, by = NULL, decimals = 2, show_warnings = TRUE, show_erro
 
   stopifnot(!missing(data))
 
-
-
-  if (!missing(by)) data.validate <- .media.validate.data(data=data, by=by, lang=lang)
-  else data.validate <- .media.validate.data(data=data, lang=lang)
+  data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang)
 
   data.final <- data.validate[["data"]]
   by.name <- data.validate[["by"]]
+  variables.names <- data.validate[["variables"]]
 
   if (is.na(col.names)) {
     if (lang == "es") col.names <- c(var="var",groups="grupos",n="n.validos",missing="n.perdidos",
@@ -52,17 +76,16 @@ media <- function(data, by = NULL, decimals = 2, show_warnings = TRUE, show_erro
   data.name <- deparse(substitute(data))
   if (length(grep("$",data.name, fixed=TRUE)) == 1) data.name <- sub(".*\\$","",data.name)
 
-  if (!is.na(by.name)) {
-    result.final <- media.data.frame(data.final, by = by.name, decimals = decimals)
-    names(result.final) <- col.names
-  }
-  else {
-    result.final <- media.data.frame(data.final, decimals = decimals)
-    if(DEBUG) cat("[DEBUG] (media) total names(result.final):", length(names(result.final)), "  col.names length:",length(col.names),"  \n")
-    if(is.data.frame(result.final)) names(result.final) <- col.names[-2]
-  }
+  if(!is.data.frame(data)) names(data.final)[1] <- data.name
 
-  # if (show.help) cat(.media.text(lang, "HELP"))
+  result.final <- media.data.frame(data.final, by = by.name, decimals = decimals, DEBUG = DEBUG)
+
+  if (!is.na(by.name)) names(result.final) <- col.names
+  else names(result.final) <- col.names[-2]
+
+
+  attr(result.final, "by") <- by.name
+  attr(result.final, "variables") <- variables.names
   attr(result.final, "help") <- show.help
   attr(result.final, "help_text") <- .media.text(lang, "HELP")
 
@@ -83,15 +106,21 @@ media <- function(data, by = NULL, decimals = 2, show_warnings = TRUE, show_erro
 
 
 
-.media.validate.data <- function(data, by = NULL, lang = "en") {
+.media.validate.data <- function(data, variables, by, lang = "en") {
 
   #-- data vector
   if (!is.data.frame(data)) data.final <- as.data.frame(data)
   else data.final <- data
 
   if(rlang::is_empty(data.final)) stop(.media.error.text(lang,"DATA_EMPTY"))
-  #-- by vector
-  if(!missing(by)) {
+
+  check.by = FALSE
+  if (length(by) == 1) {
+    if (!is.na(by)) check.by = TRUE
+  } else if (length(by) > 1) check.by = TRUE
+
+
+  if(check.by) {
     if ((!is.character(by)) & (!is.factor(by))) stop(.media.error.text(lang,"BY_CLASS"))
 
     #.. is a string or a factor
@@ -112,20 +141,43 @@ media <- function(data, by = NULL, decimals = 2, show_warnings = TRUE, show_erro
   }
   else by.name <- NA
 
+  check.vars = FALSE
+  if (length(variables) == 1) {
+    if (!is.na(variables)) check.vars = TRUE
+  } else if (length(variables) > 1) check.vars = TRUE
+
+  if(check.vars){
+    if(!is.character(variables)) stop(.media.error.text(lang, "VARIABLES_NOT_CHAR"))
+    vars.in.data.frame <- sum(variables %in% names(data))
+    if(vars.in.data.frame != length(variables)) stop(.media.error.text(lang, "VARIABLES_NOT_IN_DF"))
+
+    #--- AT THIS POINT by is either a var.name or NA and VARIABLES is a vector with valid variable names
+    #-- we limit the data.frame to those variables
+
+    if (!is.na(by.name)) variables.tot <- c(by.name, variables)
+    else variables.tot <- variables
+
+    data.final <- data.final[, variables.tot]
+    names(data.final) <- variables.tot
+  }
+
   data.validate <- list()
   data.validate[["data"]] = data.final
+  data.validate[["variables"]] = variables
   data.validate[["by"]] = by.name
+
   return(data.validate)
 }
 
 
-media.data.frame <- function(data, by = NULL, decimals = 2, DEBUG = FALSE){
+media.data.frame <- function(data, by, decimals = 2, DEBUG = FALSE){
   grouping = FALSE
-  if(!missing(by)) {
+  if(!is.na(by)) {
     grouping = TRUE
-    if (DEBUG) cat("[DEBUG] (media.data.frame) by:", eval(by), "\n")
-    levels.list <- levels(as.factor(data[,eval(by)]))
-    # if (DEBUG) cat("[DEBUG] (media.data.frame) levels.list:", levels.list, "\n")
+    by.name <- eval(by)
+    if (DEBUG) cat("[DEBUG] (media.data.frame) by:", by.name, "\n")
+    levels.list <- levels(as.factor(data[,by.name]))
+    if (DEBUG) cat("[DEBUG] (media.data.frame) levels.list:", levels.list, "\n")
     for(l in levels.list){
       d <- data[data[,eval(by)] == l, ]
       r <- lapply(d,.media, decimals = decimals)
@@ -193,7 +245,10 @@ media.data.frame <- function(data, by = NULL, decimals = 2, DEBUG = FALSE){
 #' @export
 print.udaicR_mean <- function(obj, ...) {
   if (attr(obj,"help")) cat(attr(obj,"help_text"))
-  print(as.data.frame(obj))
+  if ("knitr" %in% rownames(installed.packages()))
+    print(knitr::kable(as.data.frame(obj)))
+  else
+    print(as.data.frame(obj))
 }
 
 #' @export
@@ -265,6 +320,8 @@ is.udaicR_mean <- function(obj){
     GENERIC = "generic error in udaicR::media",
     DATA_EMPTY = "'data' vector or data frame has no observations",
     DATA_CLASS = "'data' must be a numeric vector or data.frame",
+    VARIABLES_NOT_CHAR = "'variables' no es un vector de texto",
+    VARIABLES_NOT_IN_DF = "hay variables indicadas en 'variables' que no se encuentran en el data.frame",
     BY_CLASS = "'by' argument must be either a string with the name of a variable present in the 'data' data.frame or a vector with different categories",
     BY_LENGTH = "'by' vector must be the same length as 'data' vector (or data.frame)",
     BY_STRING_NO_DF = "'by' is a string but 'data' is not a data.frame",
@@ -275,6 +332,8 @@ is.udaicR_mean <- function(obj){
     GENERIC = "error generico en la función udaicR::media",
     DATA_EMPTY = "el vector (o data.frame) 'data' no tiene observaciones (esta vacio)",
     DATA_CLASS = "'data' debe ser un vector numerico o un data.frame",
+    VARIABLES_NOT_CHAR = "'variables' is not a character vector",
+    VARIABLES_NOT_IN_DF = "there are variables indicated in 'variables' that could not be found",
     BY_CLASS = "el argumento 'by' debe ser o una cadena de texto con el nombre de la variable de agrupación dentro del data.frame o un vector con las categorias para usar como grupos",
     BY_LENGTH = "variable de datos y variable de agrupación con longitudes diferentes",
     BY_STRING_NO_DF = "'by' es una cadena de texto pero 'data' no es un data.frame",
