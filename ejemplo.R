@@ -1,5 +1,9 @@
 rm(list = ls())
 
+
+
+
+
 # library(udaicR)
 data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
                      HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
@@ -93,11 +97,11 @@ media(data_, "AGE", "HEIGHT")
 
 media(data_, AGE,HEIGHT, by="SEX")
 media(data_, AGE,HEIGHT, by=SEX)
-media(data_, AGE,HEIGHT, by=SEX, result.as.data.frame = F)
+media(data_, AGE,HEIGHT, by=SEX)
 
 
 media(AGE, data = data_, mean=F)
-media(AGE, data = data_, mean=F, by="SEXO")
+media(AGE, data = data_, mean=F, by="SEX")
 media("DATOS",data = data_)
 
 
@@ -150,9 +154,6 @@ means(data_, AGE, HEIGHT, group_by_col = SEX)
 # --- esto funciona también con media
 media(data_, HEIGHT)
 
-
-(r <- tab(data_,SEX,BLOND,row_percent = F, show_totals = T))
-kable(r)
 
 means(data_, EMPTY, group_by_col = SEX)
 

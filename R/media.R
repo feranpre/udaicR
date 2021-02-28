@@ -49,8 +49,8 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
                   n=TRUE, missing=TRUE,
                   min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
                   median=TRUE, IQR=TRUE, norm.test = TRUE,
-                  col.names = NA,
-                  lang = "en", DEBUG = FALSE, show.help = FALSE) {
+                  col_names = NA,
+                  lang = "en", DEBUG = FALSE, show.help = FALSE, compare = TRUE) {
   # source("R/normality.R")
   if (!require("dplyr", quietly = TRUE)) {
     stop(error.text[[lang]]["DPLYR"], call. = FALSE)
@@ -58,18 +58,13 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
   stopifnot(!missing(data))
 
-  data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang)
 
+  data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang)
   data.final <- data.validate[["data"]]
   by.name <- data.validate[["by"]]
   variables.names <- data.validate[["variables"]]
 
-  if (is.na(col.names)) {
-    if (lang == "es") col.names <- c(var="var",groups="grupos",n="n.validos",missing="n.perdidos",
-                                     min="min",max="max",mean="media",sd="desv. est.",median="mediana",IQR="Rang.Inter",norm.test="es.normal")
-    else col.names <- c(var="var",groups="groups",n="n.valid",missing="n.missing",
-                        min="min",max="max",mean="mean",sd="sd",median="median",IQR="IQR",norm.test="is.normal")
-  }
+
 
   if(DEBUG) cat("[DEBUG] (media) by.name:", by.name, "\n")
 
@@ -80,9 +75,44 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
   result.final <- media.data.frame(data.final, by = by.name, decimals = decimals, DEBUG = DEBUG)
 
-  if (!is.na(by.name)) names(result.final) <- col.names
-  else names(result.final) <- col.names[-2]
 
+
+  if(n == FALSE) result.final[, col_names["n"]] <- NULL
+  if(missing == FALSE) result.final[, col_names["missing"]] <- NULL
+  if(min == FALSE) result.final[, col_names["min"]] <- NULL
+  if(max == FALSE) result.final[, col_names["max"]] <- NULL
+  if(mean == FALSE) result.final[, col_names["mean"]] <- NULL
+  if(sd == FALSE) result.final[, col_names["sd"]] <- NULL
+  if(median == FALSE) result.final[, col_names["median"]] <- NULL
+  if(IQR == FALSE) result.final[, col_names["IQR"]] <- NULL
+  if(norm.test == FALSE) result.final[, col_names["norm.test"]] <- NULL
+
+  #--------------------------------------------------------- checking column names -----------------
+  check.col_names = FALSE
+  default.col_names = TRUE
+  if (length(col_names) == 1) {
+    if (!is.na(col_names)) check.col_names = TRUE
+  } else if (length(col_names) > 1) check.col_names = TRUE
+
+  if (check.col_names) {
+    #--- custom col_names, so they must be checked
+    num.correct.cols <- sum(sapply(names(result.final), function(x)x%in%names(col_names)))
+    if (num.correct.cols != ncol(result.final)) col_names <- .media.col_names(lang)
+    else default.col_names = FALSE
+  }
+  else col_names <- .media.col_names(lang)
+
+  #now we have the column names
+  #if the columns names are the default ones we have to make them match selected columns
+  #if not, the name of column names provided should match the number of columns and no check is needed
+  if(default.col_names) col_names <- col_names[names(result.final)]
+
+  #-- now col_names number should match whether or not it was a custom column_name vector
+  if(length(col_names) != ncol(result.final)) stop(.media.error.text(lang,"COL_NAMES_LENGTH"))
+
+  if (!is.na(by.name)) names(result.final) <- col_names
+  else names(result.final) <- col_names[-2]
+  #----------------------------------------------------END --- checking column names -----------------
 
   attr(result.final, "by") <- by.name
   attr(result.final, "variables") <- variables.names
@@ -91,22 +121,28 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
   class(result.final) <- append("udaicR_mean", class(result.final))
 
-  if(n == FALSE) result.final[, col.names["n"]] <- NULL
-  if(missing == FALSE) result.final[, col.names["missing"]] <- NULL
-  if(min == FALSE) result.final[, col.names["min"]] <- NULL
-  if(max == FALSE) result.final[, col.names["max"]] <- NULL
-  if(mean == FALSE) result.final[, col.names["mean"]] <- NULL
-  if(sd == FALSE) result.final[, col.names["sd"]] <- NULL
-  if(median == FALSE) result.final[, col.names["median"]] <- NULL
-  if(IQR == FALSE) result.final[, col.names["IQR"]] <- NULL
-  if(norm.test == FALSE) result.final[, col.names["norm.test"]] <- NULL
 
   return(result.final)
 }
 
-
+.media.col_names <- function(lang="en") {
+  if (lang == "es") col_names <- c(var="var",groups="grupos",n.valid="n.validos",n.missing="n.perdidos",
+                                   min="min",max="max",mean="media",sd="desv. est.",median="mediana",IQR="Rang.Inter",norm.test="es.normal")
+  else col_names <- c(var="var",groups="groups",n.valid="n.valid",n.missing="n.missing",
+                      min="min",max="max",mean="mean",sd="sd",median="median",IQR="IQR",norm.test="is.normal")
+  return(col_names)
+}
 
 .media.validate.data <- function(data, variables, by, lang = "en") {
+
+
+
+  # TODO: Debería intentar hacer la conversión de 'variables' y 'by' desde quosure a string y así devolverlos ya bien montados.
+  #       Usa el codigo que hay en mean.R
+
+
+
+
 
   #-- data vector
   if (!is.data.frame(data)) data.final <- as.data.frame(data)
@@ -326,6 +362,7 @@ is.udaicR_mean <- function(obj){
     BY_LENGTH = "'by' vector must be the same length as 'data' vector (or data.frame)",
     BY_STRING_NO_DF = "'by' is a string but 'data' is not a data.frame",
     BY_NOT_IN_DF = "'by' variable is not in 'data' data.frame",
+    COL_NAMES_LENGTH = "the number of elements in col_names do not match the final number of columns, check if you removed a column for witch you have a name specified or the other way around",
     BY_GENERIC_ERROR = "error with 'by' variable"
   )
   error.text[["es"]] <- c(
@@ -338,6 +375,7 @@ is.udaicR_mean <- function(obj){
     BY_LENGTH = "variable de datos y variable de agrupación con longitudes diferentes",
     BY_STRING_NO_DF = "'by' es una cadena de texto pero 'data' no es un data.frame",
     BY_NOT_IN_DF = "la variable de agrupacion 'by' no está presente en el data.frame 'data'",
+    COL_NAMES_LENGTH = "el numero de elementos en 'col_names' no coincide con la cantidad de columnas solicitas. Compruebe que no ha quitado una columna para la que tiene un nombre de columna o al revés",
     BY_GENERIC_ERROR = "error con la variable 'by'"
   )
 
