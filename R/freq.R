@@ -1,3 +1,25 @@
+#' ================
+#'
+#' Intervalo  de confianza para proporciones
+#' Hacerlo para medias tb
+#'
+#'
+#' ==========================================
+#'
+#' Confidence Interval = p  +/-  z*(√p(1-p) / n)
+#'
+#'  where:
+#'
+#'  p: sample proportion
+#'  z: the chosen z-value
+#'  n: sample size
+#'
+#'
+
+
+
+
+
 #' Title freq
 #'
 #' The freq function creates a dataframe with the frequencies of the independent values in one or more variables passed as arguments.

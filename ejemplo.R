@@ -17,6 +17,13 @@ data_$EMPTY <- rep(NA,nrow(data_))
 
 load("DATOS.RData")
 
+t.test(data_$AGE ~ data_$SEX, equal.var = FALSE)
+t.test(data_$AGE ~ data_$SEX, equal.var = TRUE)
+c <-car::leveneTest(data_$AGE, group= data_$SEX)
+c$`Pr(>F)`
+
+
+
 media(DATOS$IMC)
 media(DATOS, variables = c("IMC","EDAD"), by="SEXO", DEBUG = T)
 media(DATOS, variables = c("IMC","EDAD"), DEBUG = T)
@@ -93,7 +100,7 @@ media(data_, AGE)
 media(data_, "AGE")
 
 media(data_, AGE, HEIGHT)
-media(data_, "AGE", "HEIGHT")
+media(data_, "AGE", by="SEX")
 
 media(data_, AGE,HEIGHT, by="SEX")
 media(data_, AGE,HEIGHT, by=SEX)

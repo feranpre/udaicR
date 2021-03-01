@@ -59,6 +59,16 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   stopifnot(!missing(data))
 
 
+
+
+  # TODO: Debería intentar hacer la conversión de 'variables' y 'by' desde quosure a string y así devolverlos ya bien montados.
+  #       Usa el codigo que hay en mean.R
+  #
+  # INCLUIR BISCAGRA DE TUCKEY
+
+
+
+
   data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang)
   data.final <- data.validate[["data"]]
   by.name <- data.validate[["by"]]
@@ -74,26 +84,33 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   if(!is.data.frame(data)) names(data.final)[1] <- data.name
 
   result.final <- media.data.frame(data.final, by = by.name, decimals = decimals, DEBUG = DEBUG)
+  full.result.final <- result.final
 
+  if(compare) {
+     media.compare(data.final, by = by.name, decimals = decimals, DEBUG = DEBUG, show.warnings = show.warnings, result.mean = result.final)
+  }
 
+  col_names.temp = .media.col_names()
 
-  if(n == FALSE) result.final[, col_names["n"]] <- NULL
-  if(missing == FALSE) result.final[, col_names["missing"]] <- NULL
-  if(min == FALSE) result.final[, col_names["min"]] <- NULL
-  if(max == FALSE) result.final[, col_names["max"]] <- NULL
-  if(mean == FALSE) result.final[, col_names["mean"]] <- NULL
-  if(sd == FALSE) result.final[, col_names["sd"]] <- NULL
-  if(median == FALSE) result.final[, col_names["median"]] <- NULL
-  if(IQR == FALSE) result.final[, col_names["IQR"]] <- NULL
-  if(norm.test == FALSE) result.final[, col_names["norm.test"]] <- NULL
+  if(n == FALSE) result.final[, col_names.temp["n.valid"]] <- NULL
+  if(missing == FALSE) result.final[, col_names.temp["n.missing"]] <- NULL
+  if(min == FALSE) result.final[, col_names.temp["min"]] <- NULL
+  if(max == FALSE) result.final[, col_names.temp["max"]] <- NULL
+  if(mean == FALSE) result.final[, col_names.temp["mean"]] <- NULL
+  if(sd == FALSE) result.final[, col_names.temp["sd"]] <- NULL
+  if(median == FALSE) result.final[, col_names.temp["median"]] <- NULL
+  if(IQR == FALSE) result.final[, col_names.temp["IQR"]] <- NULL
+  if(norm.test == FALSE) result.final[, col_names.temp["norm.test"]] <- NULL
 
   #--------------------------------------------------------- checking column names -----------------
   check.col_names = FALSE
+
   default.col_names = TRUE
   if (length(col_names) == 1) {
     if (!is.na(col_names)) check.col_names = TRUE
   } else if (length(col_names) > 1) check.col_names = TRUE
 
+  if (DEBUG) cat("\n(media)CHECK.COL_NAMES: ",check.col_names)
   if (check.col_names) {
     #--- custom col_names, so they must be checked
     num.correct.cols <- sum(sapply(names(result.final), function(x)x%in%names(col_names)))
@@ -102,10 +119,13 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   }
   else col_names <- .media.col_names(lang)
 
+  # print(names(result.final))
+
+
   #now we have the column names
   #if the columns names are the default ones we have to make them match selected columns
   #if not, the name of column names provided should match the number of columns and no check is needed
-  if(default.col_names) col_names <- col_names[names(result.final)]
+  # if(default.col_names) col_names <- col_names[names(result.final)]
 
   #-- now col_names number should match whether or not it was a custom column_name vector
   if(length(col_names) != ncol(result.final)) stop(.media.error.text(lang,"COL_NAMES_LENGTH"))
@@ -118,12 +138,119 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   attr(result.final, "variables") <- variables.names
   attr(result.final, "help") <- show.help
   attr(result.final, "help_text") <- .media.text(lang, "HELP")
+  attr(result.final, "full_result") <- full.result.final
 
   class(result.final) <- append("udaicR_mean", class(result.final))
 
 
   return(result.final)
 }
+
+#' @importFrom cars, leveneTest
+media.compare <- function(data, by, result.mean, decimals = 2, DEBUG = FALSE, show.warnings = FALSE) {
+  if(is.na(by)) stop(.media.error.text(lang,"COMP_NO_GROUP"))
+  by.name <- eval(by)
+  if (DEBUG) cat("[DEBUG] (media.compare) by:", by.name, "\n")
+  levels.list <- levels(as.factor(data[,by.name]))
+
+  by.values <- data[,by]
+
+  for (v in names(data)){
+
+    var.values <- data[,v]
+    if((is.numeric(var.values)) & (v != by)) {
+
+      #if there are as many TRUE as groups, then var.normal = TRUE, else FALSE
+      var.normal <- ifelse(sum(result.mean[result.mean$var == v, "norm.test"]) == nrow(result.mean[result.mean$var == v,]), TRUE, FALSE)
+      # var.normal <- udaicR::is_normal(var.values)
+      if(DEBUG) cat("\n(media.compare) VAR: ", v, " --NORMAL:", var.normal)
+
+      #---------------------------------------- menos de dos
+      if (length(levels.list) < 2) {
+        if(show.warnigns) cat(.media.error.text(lang,"COMP_LESS_2_GROUPS"))
+      }
+      #---------------------------------------- dos grupos
+      else if (length(levels.list) == 2) {
+        if(var.normal) {
+          #--- t.student
+          var.test.p <- car::leveneTest(var.values, group = as.factor(by.values))$`Pr(>F)`
+          homocedasticity <- ifelse(var.test.p < 0.05, FALSE, TRUE)
+
+          temp <- t.test(var.values ~ by.values, equal.var = homocedasticity)
+          method = "Welch t-test"
+          stat.value = temp$statistic
+          p.value = temp$p.value
+          mean.diff = temp$estimate[1] - temp$estimate[2]
+          mean.diff.ci.up = temp$conf.int[2]
+          mean.diff.ci.low = temp$conf.int[1]
+          result.temp <- data.frame(levene = var.test.p, method = method,
+                                    stat = stat.value, p = p.value, mean.diff = mean.diff,
+                                    CI.low = mean.diff.ci.low, CI.high = mean.diff.ci.up)
+        }
+        else {
+          print(var.test(var.values ~ by.values))
+          temp <- tryCatch({
+            wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = TRUE)
+          }, warning = function(warn) {
+            if (warn$message == "cannot compute exact p-value with ties") {
+                #----------------------------------------------------------------- there are ties, aborting wilcoxon
+                if(DEBUG) cat("\n(media.compare) 2 GROUPS - NOT NORMAL - there are ties")
+                return(wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = FALSE))
+            }
+            else return(wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = FALSE))
+          }, error = function(err) {
+            stop(err)
+          }
+          )
+
+          method = "Wilcox-Mann-Whitney"
+          stat.value = temp$statistic
+          p.value = temp$p.value
+          mean.diff = temp$estimate
+          mean.diff.ci.up = temp$conf.int[2]
+          mean.diff.ci.low = temp$conf.int[1]
+          # OJO!!!!!!
+          # difference in location no es la diferencia de medianas sino la mediana de las diferencias!!!!
+
+          # - Incluir bootstrap
+          # https://data.library.virginia.edu/the-wilcoxon-rank-sum-test/
+          #Hogg, R.V. and Tanis, E.A., Probability and Statistical Inference, 7th Ed, Prentice Hall, 2006.
+          #R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+          result.temp <- data.frame(levene = NA, method = method,
+                                    stat = stat.value, p = p.value, mean.diff = mean.diff,
+                                    CI.low = mean.diff.ci.low, CI.high = mean.diff.ci.up)
+        }
+
+      }
+      #---------------------------------------- mas de dos grupos
+      else if (length(levels.list) > 2) {
+      }
+    }
+
+    if(exists("result.temp")){
+      if(!exists("result.final")) result.final <- result.temp
+      else result.final <- rbind(result.final, result.temp)
+      rm(list="result.temp")
+    }
+  } #--- end variables in data.frame loop
+  cat("\n\n --- COMPARE --- \n\n")
+  print(result.final)
+ # if(exists("result.final")) return(result.final)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .media.col_names <- function(lang="en") {
   if (lang == "es") col_names <- c(var="var",groups="grupos",n.valid="n.validos",n.missing="n.perdidos",
@@ -134,15 +261,6 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 }
 
 .media.validate.data <- function(data, variables, by, lang = "en") {
-
-
-
-  # TODO: Debería intentar hacer la conversión de 'variables' y 'by' desde quosure a string y así devolverlos ya bien montados.
-  #       Usa el codigo que hay en mean.R
-
-
-
-
 
   #-- data vector
   if (!is.data.frame(data)) data.final <- as.data.frame(data)
@@ -157,6 +275,8 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
 
   if(check.by) {
+    print("by")
+
     if ((!is.character(by)) & (!is.factor(by))) stop(.media.error.text(lang,"BY_CLASS"))
 
     #.. is a string or a factor
@@ -259,15 +379,15 @@ media.data.frame <- function(data, by, decimals = 2, DEBUG = FALSE){
     if (sum(is.na(df[,1])) == nrow(df)) result <- NA #.. if its completely empty...
     else {
       result <- df %>% summarize(
-        n = n()-sum(is.na(df[,1])),
-        missing = sum(is.na(df[,1])),
+        n.valid = n()-sum(is.na(df[,1])),
+        n.missing = sum(is.na(df[,1])),
         min=round(min(df[,1], na.rm = TRUE),digits = decimals),
         max=round(max(df[,1], na.rm = TRUE),digits = decimals),
         mean=round(mean(df[,1], na.rm = TRUE), digits = decimals),
         sd=round(sd(df[,1], na.rm = TRUE),digits = decimals),
         median=round(median(df[,1], na.rm = TRUE),digits = decimals),
         IQR=round(IQR(df[,1], na.rm = TRUE),digits = decimals),
-        normal = udaicR::is_normal(df[,1])
+        norm.test = udaicR::is_normal(df[,1])
       )
     }
   } else result <- NA
@@ -362,6 +482,8 @@ is.udaicR_mean <- function(obj){
     BY_LENGTH = "'by' vector must be the same length as 'data' vector (or data.frame)",
     BY_STRING_NO_DF = "'by' is a string but 'data' is not a data.frame",
     BY_NOT_IN_DF = "'by' variable is not in 'data' data.frame",
+    COMP_NO_GROUP = "se ha solicitado una comparacion sin indicar grupos. Por favor, complete el argumento 'by'",
+    COMP_LESS_2_GROUP = "la variable de agrupación indicada en 'by' tiene menos de dos grupos para comparar.",
     COL_NAMES_LENGTH = "the number of elements in col_names do not match the final number of columns, check if you removed a column for witch you have a name specified or the other way around",
     BY_GENERIC_ERROR = "error with 'by' variable"
   )
@@ -375,6 +497,8 @@ is.udaicR_mean <- function(obj){
     BY_LENGTH = "variable de datos y variable de agrupación con longitudes diferentes",
     BY_STRING_NO_DF = "'by' es una cadena de texto pero 'data' no es un data.frame",
     BY_NOT_IN_DF = "la variable de agrupacion 'by' no está presente en el data.frame 'data'",
+    COMP_NO_GROUP = "a comparison was requested without groups to compare. Please fill 'by' argument.",
+    COMP_LESS_2_GROUP = "grouping variable 'by' has fewer than 2 groups",
     COL_NAMES_LENGTH = "el numero de elementos en 'col_names' no coincide con la cantidad de columnas solicitas. Compruebe que no ha quitado una columna para la que tiene un nombre de columna o al revés",
     BY_GENERIC_ERROR = "error con la variable 'by'"
   )
