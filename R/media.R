@@ -50,7 +50,7 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
                   min=TRUE, max= TRUE, mean=TRUE, sd=TRUE,
                   median=TRUE, IQR=TRUE, norm.test = TRUE,
                   col_names = NA,
-                  lang = "en", DEBUG = FALSE, show.help = FALSE, compare = TRUE) {
+                  lang = "en", DEBUG = FALSE, show.help = FALSE, compare = FALSE) {
   # source("R/normality.R")
   if (!require("dplyr", quietly = TRUE)) {
     stop(error.text[[lang]]["DPLYR"], call. = FALSE)
@@ -83,12 +83,11 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
   if(!is.data.frame(data)) names(data.final)[1] <- data.name
 
-  result.final <- media.data.frame(data.final, by = by.name, decimals = decimals, DEBUG = DEBUG)
-  full.result.final <- result.final
+  result.final.raw <- media.data.frame(data.final, by = by.name, decimals = decimals, DEBUG = DEBUG)
+  # result.final.raw <- result.final
+  result.final <- .pretify.media(result.final.raw)
 
-  if(compare) {
-     comp.result <- media.compare(data.final, by = by.name, decimals = decimals, DEBUG = DEBUG, show.warnings = show.warnings, result.mean = result.final)
-  }
+
 
   #------------------------------------------------------------- limiting result columns -------------
   col_names.temp = .media.col_names()
@@ -137,142 +136,47 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   #----------------------------------------------------END --- checking column names -----------------
 
   attr(result.final, "by") <- by.name
+  attr(result.final, "by.levels") <- data.validate[["by.levels"]]
+  attr(result.final, "by.num.levels") <- data.validate[["by.num.levels"]]
   attr(result.final, "variables") <- variables.names
   attr(result.final, "help") <- show.help
-  attr(result.final, "help_text") <- .media.text(lang, "HELP")
-  attr(result.final, "full_result") <- full.result.final
+  attr(result.final, "help.text") <- .media.text(lang, "HELP")
+  attr(result.final, "raw.result") <- result.final.raw
   if (exists("comp.result"))  attr(result.final, "comp") <- comp.result
 
   class(result.final) <- append("udaicR_mean", class(result.final))
 
+  # if(compare) {
+  #   comp.result <- comp.media(data.final, by = by.name, result.mean = result.final, decimals = decimals, DEBUG = DEBUG, show.warnings = show.warnings, result.mean = result.final)
+  # }
+
   return(result.final)
 }
 
 
+.pretify.media <- function(data) {
+  grouping = FALSE
+  if (length(levels(as.factor(data$var))) < nrow(data)) grouping = TRUE
 
-
-
-
-
-
-#' @importFrom cars, leveneTest
-media.compare <- function(data, by, result.mean, decimals = 2, DEBUG = FALSE, show.warnings = FALSE) {
-  if(is.na(by)) stop(.media.error.text(lang,"COMP_NO_GROUP"))
-  by.name <- eval(by)
-  result.mean <- result.mean[result.mean$var != "---",]
-  if (DEBUG) cat("[DEBUG] (media.compare) by:", by.name, "\n")
-  if (DEBUG) cat("[DEBUG] (media.compare) result.mean:", paste(result.mean), "\n")
-  levels.list <- levels(as.factor(data[,by.name]))
-
-  by.values <- data[,by]
-
-  for (v in names(data)){
-
-    var.values <- data[,v]
-    if((is.numeric(var.values)) & (v != by)) {
-      if(DEBUG) cat("\n(media.compare) VAR: ", v)
-      #if there are as many TRUE as groups, then var.normal = TRUE, else FALSE
-      var.normal <- ifelse(sum(result.mean[result.mean$var == v, "norm.test"]) == nrow(result.mean[result.mean$var == v,]), TRUE, FALSE)
-      # var.normal <- udaicR::is_normal(var.values)
-      if(DEBUG) cat("\n(media.compare) VAR: ", v, " --NORMAL:", var.normal)
-
-      #---------------------------------------- menos de dos
-      if (length(levels.list) < 2) {
-        if(show.warnigns) cat(.media.error.text(lang,"COMP_LESS_2_GROUPS"))
-      }
-      #--------------------------------------------------------------------- START --------- dos grupos
-      else if (length(levels.list) == 2) {
-        #---------------------- START ---- if var is normal -------------
-        if(var.normal) {
-          # if(DEBUG) cat("\n\n(media.compare) Var is normal, comparing\n\n")
-          #--- t.student
-          var.test.p <- car::leveneTest(var.values, group = as.factor(by.values))$`Pr(>F)`[1]
-          homocedasticity <- ifelse(var.test.p < 0.05, FALSE, TRUE)
-
-          temp <- t.test(var.values ~ by.values, equal.var = homocedasticity)
-          method = "Welch t-test"
-          stat.value = temp$statistic
-          p.value = temp$p.value
-          mean.diff = temp$estimate[1] - temp$estimate[2]
-          mean.diff.ci.up = temp$conf.int[2]
-          mean.diff.ci.low = temp$conf.int[1]
-        }
-        #---------------------- END ---- if var is normal -------------
-        #---------------------- START -- if var is NOT NORMAL
-        else {
-          temp <- tryCatch({
-            wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = TRUE)
-          }, warning = function(warn) {
-            if (warn$message == "cannot compute exact p-value with ties") {
-                #----------------------------------------------------------------- there are ties, aborting wilcoxon
-                if(DEBUG) cat("\n(media.compare) 2 GROUPS - NOT NORMAL - there are ties. VAR ->", v)
-                return(wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = FALSE))
-            }
-            else return(wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = FALSE))
-          }, error = function(err) {
-            stop(err)
-          }
-          )
-
-          method = "Wilcox-Mann-Whitney"
-          var.test.p = NA
-          stat.value = temp$statistic
-          p.value = temp$p.value
-          mean.diff = temp$estimate
-          mean.diff.ci.up = temp$conf.int[2]
-          mean.diff.ci.low = temp$conf.int[1]
-          # OJO!!!!!!
-          # difference in location no es la diferencia de medianas sino la mediana de las diferencias!!!!
-
-          # - Incluir bootstrap
-          # https://data.library.virginia.edu/the-wilcoxon-rank-sum-test/
-          #Hogg, R.V. and Tanis, E.A., Probability and Statistical Inference, 7th Ed, Prentice Hall, 2006.
-          #R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-
-        }
-        #---------------------- END -- if var is NOT NORMAL
-
-
-        #--- forming results for 2 groups
-        result.temp <- data.frame(var = v, levene.p = var.test.p, method = method,
-                                  stat = stat.value, p = p.value, mean.diff = mean.diff,
-                                  CI.low = mean.diff.ci.low, CI.high = mean.diff.ci.up)
+  #.. if there are no categories then we don't need to "divide" the data.frame
+  if (!grouping) result.final <- data
+  else {
+    for(v in unique(data$var)) {
+      if (!exists("result.final")) result.final <- data[data$var == v,]
+      else {
+        nrow.pre <- nrow(result.final)
+        result.final <- rbind(result.final, rep("---",ncol(data)),data[data$var == v,])
+        # result.final <- rbind(result.final, rep(NA,ncol(data)),data[data$var == v,])
+        # result.final$var[nrow.pre + 1] <- "---"
+        # result.final$cat[nrow.pre + 1] <- "---"
 
       }
-      #--------------------------------------------------------------------- END --------- dos grupos
-      #--------------------------------------------------------------------- START ------- mas de dos grupos
-      else if (length(levels.list) > 2) {
-      }
-      #--------------------------------------------------------------------- END ------- mas de dos grupos
+      # else result.final <- rbind(result.final,result[result$var == v,])
+    }
+  }
 
-
-      if(exists("result.temp")){
-        # if (DEBUG) print(result.temp)
-        if(!exists("result.final")) result.final <- as.data.frame(result.temp)
-        else result.final <- rbind(result.final, result.temp)
-        rm(list=c("result.temp", "temp", "var.test.p", "method", "stat.value", "p.value", "mean.diff", "mean.diff.ci.low", "mean.diff.ci.up"))
-        if(DEBUG) cat("\n(media.compare) Clearing variables\n")
-      }
-
-    } #--- end if 'by' is valid
-  } #--- end variables in data.frame loop
-
-  class(result.final) <- append("udaicR_mean_comp", class(result.final))
   return(result.final)
- # if(exists("result.final")) return(result.final)
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 .media.col_names <- function(lang="en") {
@@ -315,8 +219,16 @@ media.compare <- function(data, by, result.mean, decimals = 2, DEBUG = FALSE, sh
       else by.name = by
     }
     else stop(.media.error.text(lang,"BY_GENERIC_ERROR"))
+
+    #.. at this point the 'by' data MUST be in data.final AND the name of the var in by.name therefore
+    by.levels <- levels(as.factor(data.final[,eval(by)]))
+    by.num.levels <- length(by.levels)
   }
-  else by.name <- NA
+  else {
+    by.name <- NA
+    by.levels <- NA
+    by.num.levels <- 0
+  }
 
   check.vars = FALSE
   if (length(variables) == 1) {
@@ -342,6 +254,8 @@ media.compare <- function(data, by, result.mean, decimals = 2, DEBUG = FALSE, sh
   data.validate[["data"]] = data.final
   data.validate[["variables"]] = variables
   data.validate[["by"]] = by.name
+  data.validate[["by.levels"]] = by.levels
+  data.validate[["by.num.levels"]] = by.num.levels
 
   return(data.validate)
 }
@@ -378,22 +292,9 @@ media.data.frame <- function(data, by, decimals = 2, DEBUG = FALSE){
 
   rownames(result) <- NULL
 
-  #.. if there are no categories then we don't need to "divide" the data.frame
-  if (!grouping) result.final <- result
-  else {
-    for(v in unique(result$var)) {
-      if (!exists("result.final")) result.final <- result[result$var == v,]
-      else {
-        nrow.pre <- nrow(result.final)
-        result.final <- rbind(result.final, rep(NA,ncol(result)),result[result$var == v,])
-        result.final$var[nrow.pre + 1] <- "---"
-        result.final$cat[nrow.pre + 1] <- "---"
-      }
-      # else result.final <- rbind(result.final,result[result$var == v,])
-    }
-  }
 
-  return(result.final)
+
+  return(result)
 }
 
 
@@ -427,7 +328,7 @@ media.data.frame <- function(data, by, decimals = 2, DEBUG = FALSE){
 
 #' @export
 print.udaicR_mean <- function(obj, ...) {
-  if (attr(obj,"help")) cat(attr(obj,"help_text"))
+  if (attr(obj,"help")) cat(attr(obj,"help.text"))
   if ("knitr" %in% rownames(installed.packages()))
     print(knitr::kable(as.data.frame(obj)))
   else
@@ -436,18 +337,14 @@ print.udaicR_mean <- function(obj, ...) {
   if(!is.null(attr(obj,"comp"))) print(attr(obj,"comp"))
 }
 
-
-print.udaicR_mean_comp <- function(obj, ...) {
-  if ("knitr" %in% rownames(installed.packages()))
-    print(knitr::kable(as.data.frame( obj )))
-  else
-    print(as.data.frame(obj))
+as.data.frame.udaicR_mean <- function(obj, ...){
+  return(attr(obj,"raw.result"))
 }
+
 
 #' @export
 is.udaicR_mean <- function(obj){
-  if ("udaicR_mean" %in% class(obj)) return(TRUE)
-  return(FALSE)
+  return(inherits(obj, "udaicR_mean"))
 }
 
 # ============================================================
