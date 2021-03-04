@@ -1,9 +1,26 @@
 
 
 #' @importFrom cars, leveneTest
-comp.mean <- function(data, variables, by, result.mean = NULL, decimals = 2,
+comp.mean <- function(formula = NULL, data = NULL, variables = NULL, by = NULL, result.mean = NULL, decimals = 2,
                       show.desc = TRUE,
                       DEBUG = FALSE, show.warnings = FALSE, lang = "en") {
+
+  if(!missing(formula)) UseMethod("comp.mean", formula)
+
+  UseMethod("comp.mean",data)
+
+}
+
+
+comp.mean.formula <- function(formula, ...) {
+  print(formula)
+}
+
+
+
+comp.mean.data.frame <- function(data, variables, by, result.mean = NULL, decimals = 2,
+                                 show.desc = TRUE,
+                                 DEBUG = FALSE, show.warnings = FALSE, lang = "en") {
 
   data.validate <- .media.validate.data(data, variables = variables, by = by, lang = lang)
   data.final <- data.validate[["data"]]
@@ -36,7 +53,9 @@ comp.mean <- function(data, variables, by, result.mean = NULL, decimals = 2,
 
     if (DEBUG) cat("\nNum NORMAL cats:", normal.cats, " All normal cats:", var.normal,"\n\n")
     #--- var has all categories normal
-    if (total.cats == 2 ) result.temp <- comp.mean.2.groups(temp.data, by = by.var, normal = var.normal, decimals = decimals)
+    if (total.cats < 2) stop("TOTAL.CAT < 2, no comparison possible")
+    else if (total.cats == 2 ) result.temp <- comp.mean.2.groups(temp.data, by = by.var, normal = var.normal, decimals = decimals)
+    else if (total.cats > 2 ) result.temp <- comp.mean.many.groups(temp.data, by = by.var, normal = var.normal, decimals = decimals)
 
     if (exists("result.temp")) result.temp <- cbind(var = var, result.temp)
     if(!exists("results")) results <- result.temp
@@ -55,6 +74,29 @@ comp.mean <- function(data, variables, by, result.mean = NULL, decimals = 2,
 }
 
 
+
+
+
+
+
+
+comp.mean.many.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE, decimals = 2) {
+  if (normal) {
+
+  }
+  else {
+
+  }
+
+
+}
+
+
+
+
+
+
+
 comp.mean.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE, decimals = 2) {
 
   if (normal) {
@@ -68,8 +110,8 @@ comp.mean.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE, decim
       levene.p = round(var.test.p, digits = decimals),
       stat.value = round(temp$statistic, digits = decimals),
       mean.diff = round(temp$estimate[1] - temp$estimate[2], digits = decimals),
-      mean.diff.ci.up = round(temp$conf.int[2], digits = decimals),
       mean.diff.ci.low = round(temp$conf.int[1], digits = decimals),
+      mean.diff.ci.up = round(temp$conf.int[2], digits = decimals),
       p.value = round(temp$p.value, digits = decimals)
 
 
@@ -77,25 +119,25 @@ comp.mean.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE, decim
     )
   } else {
     temp <- tryCatch({
-        wilcox.test(data ~ by, conf.int = TRUE, correct = TRUE, exact = TRUE)
-      }, warning = function(warn) {
-        if (warn$message == "cannot compute exact p-value with ties") {
-          #----------------------------------------------------------------- there are ties, aborting wilcoxon
-          if(DEBUG) cat("\n(media.compare) 2 GROUPS - NOT NORMAL - there are ties. VAR ->", v)
-          return(wilcox.test(data ~ by, conf.int = TRUE, correct = TRUE, exact = FALSE))
-        }
-        else return(wilcox.test(data ~ by, conf.int = TRUE, correct = TRUE, exact = FALSE))
-      }, error = function(err) {
-        stop(err)
-      }
+                        wilcox.test(data ~ by, conf.int = TRUE, correct = TRUE, exact = TRUE)
+                      }, warning = function(warn) {
+                        if (warn$message == "cannot compute exact p-value with ties") {
+                          #----------------------------------------------------------------- there are ties, aborting wilcoxon
+                          if(DEBUG) cat("\n(media.compare) 2 GROUPS - NOT NORMAL - there are ties. VAR ->", v)
+                          return(wilcox.test(data ~ by, conf.int = TRUE, correct = TRUE, exact = FALSE))
+                        }
+                        else return(wilcox.test(data ~ by, conf.int = TRUE, correct = TRUE, exact = FALSE))
+                      }, error = function(err) {
+                        stop(err)
+                      }
       )
     result <- data.frame(
       method = "Wilcox-Mann-Whitney",
       levene.p = NA,
       stat.value = round(temp$statistic, digits = decimals),
       mean.diff = round(temp$estimate, digits = decimals),
-      mean.diff.ci.up = round(temp$conf.int[2], digits = decimals),
       mean.diff.ci.low = round(temp$conf.int[1], digits = decimals),
+      mean.diff.ci.up = round(temp$conf.int[2], digits = decimals),
       p.value = round(temp$p.value, digits = decimals)
     )
       # OJO!!!!!!
@@ -106,118 +148,18 @@ comp.mean.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE, decim
       #Hogg, R.V. and Tanis, E.A., Probability and Statistical Inference, 7th Ed, Prentice Hall, 2006.
       #R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
   }
-  small.p <- 10^(-1*(decimals + 1))
-  if (!is.na(result$levene.p) & (result$levene.p < small.p)) result$levene.p <- paste0("<",small.p)
-  if (result$p.value < small.p) result$p.value <- paste0("<",small.p)
+
+  if (exists("result")){
+    small.p <- 10^(-1*(decimals + 1))
+    if (!is.na(result$levene.p) & (result$levene.p < small.p)) result$levene.p <- paste0("<",small.p)
+    if (result$p.value < small.p) result$p.value <- paste0("<",small.p)
 
 
-  return(result)
+    return(result)
+  }
+  else stop("NO RESULT")
 }
 
-
-#
-#   result.mean <- result.mean[result.mean$var != "---",]
-#   if (DEBUG) cat("[DEBUG] (media.compare) by:", by.name, "\n")
-#   if (DEBUG) cat("[DEBUG] (media.compare) result.mean:", paste(result.mean), "\n")
-#   levels.list <- levels(as.factor(data[,by.name]))
-#
-#   by.values <- data[,by]
-#
-#   for (v in names(data)){
-#
-#     var.values <- data[,v]
-#     if((is.numeric(var.values)) & (v != by)) {
-#       if(DEBUG) cat("\n(media.compare) VAR: ", v)
-#       #if there are as many TRUE as groups, then var.normal = TRUE, else FALSE
-#       var.normal <- ifelse(sum(result.mean[result.mean$var == v, "norm.test"]) == nrow(result.mean[result.mean$var == v,]), TRUE, FALSE)
-#       # var.normal <- udaicR::is_normal(var.values)
-#       if(DEBUG) cat("\n(media.compare) VAR: ", v, " --NORMAL:", var.normal)
-#
-#       #---------------------------------------- menos de dos
-#       if (length(levels.list) < 2) {
-#         if(show.warnigns) cat(.media.error.text(lang,"COMP_LESS_2_GROUPS"))
-#       }
-#       #--------------------------------------------------------------------- START --------- dos grupos
-#       else if (length(levels.list) == 2) {
-#         #---------------------- START ---- if var is normal -------------
-#         if(var.normal) {
-#           # if(DEBUG) cat("\n\n(media.compare) Var is normal, comparing\n\n")
-#           #--- t.student
-#           var.test.p <- car::leveneTest(var.values, group = as.factor(by.values))$`Pr(>F)`[1]
-#           homocedasticity <- ifelse(var.test.p < 0.05, FALSE, TRUE)
-#
-#           temp <- t.test(var.values ~ by.values, equal.var = homocedasticity)
-#           method = "Welch t-test"
-#           stat.value = temp$statistic
-#           p.value = temp$p.value
-#           mean.diff = temp$estimate[1] - temp$estimate[2]
-#           mean.diff.ci.up = temp$conf.int[2]
-#           mean.diff.ci.low = temp$conf.int[1]
-#         }
-#         #---------------------- END ---- if var is normal -------------
-#         #---------------------- START -- if var is NOT NORMAL
-#         else {
-#           temp <- tryCatch({
-#             wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = TRUE)
-#           }, warning = function(warn) {
-#             if (warn$message == "cannot compute exact p-value with ties") {
-#               #----------------------------------------------------------------- there are ties, aborting wilcoxon
-#               if(DEBUG) cat("\n(media.compare) 2 GROUPS - NOT NORMAL - there are ties. VAR ->", v)
-#               return(wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = FALSE))
-#             }
-#             else return(wilcox.test(var.values ~ by.values, conf.int = TRUE, correct = TRUE, exact = FALSE))
-#           }, error = function(err) {
-#             stop(err)
-#           }
-#           )
-#
-#           method = "Wilcox-Mann-Whitney"
-#           var.test.p = NA
-#           stat.value = temp$statistic
-#           p.value = temp$p.value
-#           mean.diff = temp$estimate
-#           mean.diff.ci.up = temp$conf.int[2]
-#           mean.diff.ci.low = temp$conf.int[1]
-#           # OJO!!!!!!
-#           # difference in location no es la diferencia de medianas sino la mediana de las diferencias!!!!
-#
-#           # - Incluir bootstrap
-#           # https://data.library.virginia.edu/the-wilcoxon-rank-sum-test/
-#           #Hogg, R.V. and Tanis, E.A., Probability and Statistical Inference, 7th Ed, Prentice Hall, 2006.
-#           #R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-#
-#         }
-#         #---------------------- END -- if var is NOT NORMAL
-#
-#
-#         #--- forming results for 2 groups
-#         result.temp <- data.frame(var = v, levene.p = var.test.p, method = method,
-#                                   stat = stat.value, p = p.value, mean.diff = mean.diff,
-#                                   CI.low = mean.diff.ci.low, CI.high = mean.diff.ci.up)
-#
-#       }
-#       #--------------------------------------------------------------------- END --------- dos grupos
-#       #--------------------------------------------------------------------- START ------- mas de dos grupos
-#       else if (length(levels.list) > 2) {
-#       }
-#       #--------------------------------------------------------------------- END ------- mas de dos grupos
-#
-#
-#       if(exists("result.temp")){
-#         # if (DEBUG) print(result.temp)
-#         if(!exists("result.final")) result.final <- as.data.frame(result.temp)
-#         else result.final <- rbind(result.final, result.temp)
-#         rm(list=c("result.temp", "temp", "var.test.p", "method", "stat.value", "p.value", "mean.diff", "mean.diff.ci.low", "mean.diff.ci.up"))
-#         if(DEBUG) cat("\n(media.compare) Clearing variables\n")
-#       }
-#
-#     } #--- end if 'by' is valid
-#   } #--- end variables in data.frame loop
-#
-#   class(result.final) <- append("udaicR_mean_comp", class(result.final))
-#   return(result.final)
-#
-# }
 
 
 
