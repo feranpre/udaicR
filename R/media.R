@@ -77,6 +77,7 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
 
   if(DEBUG) cat("[DEBUG] (media) by.name:", by.name, "\n")
+  if(DEBUG) print(paste("[DEBUG] (media) DATA -----",data.final,"\n\n"))
 
   data.name <- deparse(substitute(data))
   if (length(grep("$",data.name, fixed=TRUE)) == 1) data.name <- sub(".*\\$","",data.name)
@@ -111,16 +112,17 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
     if (!is.na(col_names)) check.col_names = TRUE
   } else if (length(col_names) > 1) check.col_names = TRUE
 
-  if (DEBUG) cat("\n(media)CHECK.COL_NAMES: ",check.col_names)
+  if (DEBUG) cat("\n(media)CHECK.COL_NAMES: ",check.col_names,"\n")
   if (check.col_names) {
     #--- custom col_names, so they must be checked
     num.correct.cols <- sum(sapply(names(result.final), function(x)x%in%names(col_names)))
     if (num.correct.cols != ncol(result.final)) col_names <- .media.col_names(lang)
     else default.col_names = FALSE
   }
-  else col_names <- .media.col_names(lang)
-
-  # print(names(result.final))
+  else {
+    if (!is.na(by.name)) col_names <- .media.col_names(lang)
+    else col_names <- .media.col_names(lang)[-2]
+  }
 
 
   #now we have the column names
@@ -129,10 +131,10 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   # if(default.col_names) col_names <- col_names[names(result.final)]
 
   #-- now col_names number should match whether or not it was a custom column_name vector
-  if(length(col_names) != ncol(result.final)) stop(.media.error.text(lang,"COL_NAMES_LENGTH"))
 
-  if (!is.na(by.name)) names(result.final) <- col_names
-  else names(result.final) <- col_names[-2]
+  if(length(col_names) != ncol(result.final)) stop(.media.error.text(lang,"COL_NAMES_LENGTH"))
+  names(result.final) <- col_names
+
   #----------------------------------------------------END --- checking column names -----------------
 
   attr(result.final, "by") <- by.name
@@ -155,25 +157,21 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
 
 .pretify.media <- function(data) {
+
   grouping = FALSE
   if (length(levels(as.factor(data$var))) < nrow(data)) grouping = TRUE
 
   #.. if there are no categories then we don't need to "divide" the data.frame
-  if (!grouping) result.final <- data
-  else {
+
+  if(grouping) {
     for(v in unique(data$var)) {
       if (!exists("result.final")) result.final <- data[data$var == v,]
       else {
         nrow.pre <- nrow(result.final)
         result.final <- rbind(result.final, rep("---",ncol(data)),data[data$var == v,])
-        # result.final <- rbind(result.final, rep(NA,ncol(data)),data[data$var == v,])
-        # result.final$var[nrow.pre + 1] <- "---"
-        # result.final$cat[nrow.pre + 1] <- "---"
-
       }
-      # else result.final <- rbind(result.final,result[result$var == v,])
     }
-  }
+  } else result.final <- data
 
   return(result.final)
 }
@@ -246,8 +244,10 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
     if (!is.na(by.name)) variables.tot <- c(by.name, variables)
     else variables.tot <- variables
 
-    data.final <- data.final[, variables.tot]
+    data.final <- as.data.frame(data.final[, variables.tot])
     names(data.final) <- variables.tot
+    # cat("\n\n-----\n")
+    # print(data.final)
   }
 
   data.validate <- list()
@@ -330,16 +330,16 @@ media.data.frame <- function(data, by, decimals = 2, DEBUG = FALSE){
 print.udaicR_mean <- function(obj, ...) {
   if (attr(obj,"help")) cat(attr(obj,"help.text"))
   if ("knitr" %in% rownames(installed.packages()))
-    print(knitr::kable(as.data.frame(obj)))
+    print(knitr::kable(obj))
   else
-    print(as.data.frame(obj))
+    print(obj)
 
   if(!is.null(attr(obj,"comp"))) print(attr(obj,"comp"))
 }
 
-as.data.frame.udaicR_mean <- function(obj, ...){
-  return(attr(obj,"raw.result"))
-}
+# as.data.frame.udaicR_mean <- function(obj, ...){
+#   return(attr(obj,"raw.result"))
+# }
 
 
 #' @export

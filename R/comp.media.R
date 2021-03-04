@@ -1,16 +1,18 @@
 
 
 #' @importFrom cars, leveneTest
-comp.media <- function(data, variables, by, result.mean = NULL, decimals = 2, DEBUG = FALSE, show.warnings = FALSE, lang = "en") {
+comp.mean <- function(data, variables, by, result.mean = NULL, decimals = 2,
+                      show.desc = TRUE,
+                      DEBUG = FALSE, show.warnings = FALSE, lang = "en") {
 
-  data.validate <- .media.validate.data(data, variables, by, lang = lang)
+  data.validate <- .media.validate.data(data, variables = variables, by = by, lang = lang)
   data.final <- data.validate[["data"]]
   by.name <- data.validate[["by"]]
   variables.names <- data.validate[["variables"]]
 
   if(missing(result.mean)) result.mean <- media(data = data.final, variables = variables.names, by = by.name, decimals = decimals, show_warnings = show_warnings)
 
-  by.name <- attr(result.mean,"by")
+  # by.name <- attr(result.mean,"by")
   by.levels <- attr(result.mean,"by.levels")
   by.num.levels <- attr(result.mean,"by.num.levels")
   by.var <- data[,by.name]
@@ -29,23 +31,31 @@ comp.media <- function(data, variables, by, result.mean = NULL, decimals = 2, DE
     if(!is.numeric(temp.data)) temp.data <- as.numeric(temp.data)
     if(sum(is.na(temp.data)) == length(temp.data)) next
     normal.cats <- sum(raw.mean$norm.test[raw.mean$var == var])
-    var.normal <- ifelse(normal.cats == length(raw.mean$norm.test[raw.mean$var == var]), TRUE, FALSE)
+    total.cats <- length(raw.mean$norm.test[raw.mean$var == var])
+    var.normal <- ifelse(normal.cats == total.cats, TRUE, FALSE)
 
     if (DEBUG) cat("\nNum NORMAL cats:", normal.cats, " All normal cats:", var.normal,"\n\n")
     #--- var has all categories normal
-    result.temp <- comp.media.2.groups(temp.data, by = by.var, normal = var.normal)
-    result.temp <- cbind(var = var, result.temp)
+    if (total.cats == 2 ) result.temp <- comp.mean.2.groups(temp.data, by = by.var, normal = var.normal, decimals = decimals)
+
+    if (exists("result.temp")) result.temp <- cbind(var = var, result.temp)
     if(!exists("results")) results <- result.temp
     else results <- rbind(results, result.temp)
-
-
+    rm(list="result.temp")
   }
+
+  class(results) <- append("udaicR_mean_comp", class(results))
+
+
+  attr(results, "desc") <- result.mean
+  attr(results, "show.desc") <- show.desc
+
   return(results)
 
 }
 
 
-comp.media.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE) {
+comp.mean.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE, decimals = 2) {
 
   if (normal) {
     #--- t.student
@@ -55,12 +65,15 @@ comp.media.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE) {
     temp <- t.test(data ~ by, equal.var = homocedasticity)
     result <- data.frame(
       method = "Welch t-test",
-      levene.p = var.test.p,
-      stat.value = temp$statistic,
-      p.value = temp$p.value,
-      mean.diff = temp$estimate[1] - temp$estimate[2],
-      mean.diff.ci.up = temp$conf.int[2],
-      mean.diff.ci.low = temp$conf.int[1]
+      levene.p = round(var.test.p, digits = decimals),
+      stat.value = round(temp$statistic, digits = decimals),
+      mean.diff = round(temp$estimate[1] - temp$estimate[2], digits = decimals),
+      mean.diff.ci.up = round(temp$conf.int[2], digits = decimals),
+      mean.diff.ci.low = round(temp$conf.int[1], digits = decimals),
+      p.value = round(temp$p.value, digits = decimals)
+
+
+
     )
   } else {
     temp <- tryCatch({
@@ -79,11 +92,11 @@ comp.media.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE) {
     result <- data.frame(
       method = "Wilcox-Mann-Whitney",
       levene.p = NA,
-      stat.value = temp$statistic,
-      p.value = temp$p.value,
-      mean.diff = temp$estimate,
-      mean.diff.ci.up = temp$conf.int[2],
-      mean.diff.ci.low = temp$conf.int[1]
+      stat.value = round(temp$statistic, digits = decimals),
+      mean.diff = round(temp$estimate, digits = decimals),
+      mean.diff.ci.up = round(temp$conf.int[2], digits = decimals),
+      mean.diff.ci.low = round(temp$conf.int[1], digits = decimals),
+      p.value = round(temp$p.value, digits = decimals)
     )
       # OJO!!!!!!
       # difference in location no es la diferencia de medianas sino la mediana de las diferencias!!!!
@@ -92,8 +105,11 @@ comp.media.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE) {
       # https://data.library.virginia.edu/the-wilcoxon-rank-sum-test/
       #Hogg, R.V. and Tanis, E.A., Probability and Statistical Inference, 7th Ed, Prentice Hall, 2006.
       #R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-
   }
+  small.p <- 10^(-1*(decimals + 1))
+  if (!is.na(result$levene.p) & (result$levene.p < small.p)) result$levene.p <- paste0("<",small.p)
+  if (result$p.value < small.p) result$p.value <- paste0("<",small.p)
+
 
   return(result)
 }
@@ -206,8 +222,11 @@ comp.media.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE) {
 
 
 print.udaicR_mean_comp <- function(obj, ...) {
-  if ("knitr" %in% rownames(installed.packages()))
-    print(knitr::kable(as.data.frame( obj )))
-  else
+  if ("knitr" %in% rownames(installed.packages())){
+    if (attr(obj,"show.desc")) print(knitr::kable(attr(obj,"desc")))
+    print(knitr::kable(as.data.frame(obj)))
+  } else {
     print(as.data.frame(obj))
+  }
+
 }
