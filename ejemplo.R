@@ -6,14 +6,20 @@ rm(list = ls())
 
 # library(udaicR)
 data_ <- data.frame(AGE=sample(x = 65:100, size=30, replace = TRUE ),
-                     HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
-                     SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
-                     BLOND=sample(x = c("Yes", "No"), prob = c(.2,.8), size = 30, replace = TRUE)
+                    HEIGHT=sample(x = 120:205, size=30, replace = TRUE ),
+                    SEX=sample(x = c("Male", "Female"), prob = c(.5,.5), size = 30, replace = TRUE),
+                    BLOND=sample(x = c("Yes", "No"), prob = c(.2,.8), size = 30, replace = TRUE),
+                    HEALTH=sample(x = c("Bad", "Normal", "Excelent"), prob = c(0.2,.6,.2), size = 30, replace = TRUE)
 )
-data_ <- rbind(data_, list(34,NA,NA,NA))
-data_ <- rbind(data_, list(33,NA,"Male",NA))
-data_ <- rbind(data_, list(22,NA,NA,"No"))
+data_ <- rbind(data_, list(34,NA,NA,NA,NA))
+data_ <- rbind(data_, list(33,NA,"Male",NA,NA))
+data_ <- rbind(data_, list(22,NA,NA,"No",NA))
+data_ <- rbind(data_, list(NA,NA,NA,"No","Bad"))
 data_$EMPTY <- rep(NA,nrow(data_))
+data_$HEALTH <- as.factor(data_$HEALTH)
+
+
+udaicR::comp.mean(data_, c("HEIGHT"), by= "HEALTH", show.desc = F)
 
 load("DATOS.RData")
 

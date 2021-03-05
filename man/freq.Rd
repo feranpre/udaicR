@@ -2,7 +2,7 @@
 % Please edit documentation in R/freq.R
 \name{freq}
 \alias{freq}
-\title{Title freq}
+\title{================}
 \usage{
 freq(
   df,
@@ -54,6 +54,23 @@ freq(
 list of dataframes (1 per variable)
 }
 \description{
+Intervalo  de confianza para proporciones
+Hacerlo para medias tb
+}
+\details{
+==========================================
+
+Confidence Interval = p  +/-  z*(√p(1-p) / n)
+
+ where:
+
+ p: sample proportion
+ z: the chosen z-value
+ n: sample size
+
+
+Title freq
+
 The freq function creates a dataframe with the frequencies of the independent values in one or more variables passed as arguments.
 It can also give the information grouping said variable/s by a different one
 }

@@ -1,7 +1,7 @@
 Package: udaicR
 Type: Package
 Title: Basic functions that I use all the time
-Version: 0.1.0
+Version: 0.1.1
 Author: Fernando Andres-Pretel
 Maintainer: Fernando Andres-Pretel <feranpre@gmail.com>
 Description: This is meant to be a compilation of the things I use the most, so I don't have to carry .R files around.
@@ -15,6 +15,6 @@ Imports:
     magrittr
 Depends: 
     dplyr,
-    janitor,
-    stringi,
-    magrittr
+    PMCMRplus,
+    car
+

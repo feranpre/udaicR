@@ -23,7 +23,10 @@ means(
   range = TRUE,
   norm.test = TRUE,
   col_names = c("var", "groups", "n.valid", "n.missing", "min", "max", "mean", "sd",
-    "median", "range", "shapiro-wilk")
+    "median", "range", "shapiro-wilk"),
+  lang = "en",
+  DEBUG = FALSE,
+  show.help = FALSE
 )
 }
 \arguments{
