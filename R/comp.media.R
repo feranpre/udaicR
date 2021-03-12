@@ -37,7 +37,7 @@ comp.mean.formula <- function(formula, ...) {
 }
 
 
-
+#' @export
 comp.mean.data.frame <- function(data, variables, by, result.mean = NULL, decimals = 2,
                                  show.desc = TRUE,
                                  DEBUG = FALSE, show.warnings = FALSE, lang = "en") {
@@ -163,7 +163,7 @@ comp.mean.many.groups <- function(data, formula = NULL, by=NULL, by.name = NULL,
           temp.p.value <- gh$p.value[x,y]
           temp.stat.value <- gh$statistic[x,y]
 
-          temp.res <- data.frame(stat.value = temp.stat.value, p.value = temp.p.value)
+          temp.res <- data.frame(stat.value = temp.stat.value, mean.diff = NA, ci.low = NA, ci.up = NA, p.value = temp.p.value)
           rownames(temp.res) <- temp.group
           if(!exists("result")) result <- temp.res
           else result <- rbind(temp.res, result)
@@ -199,18 +199,19 @@ comp.mean.many.groups <- function(data, formula = NULL, by=NULL, by.name = NULL,
         temp.p.value <- gh$p.value[x,y]
         temp.stat.value <- round(gh$statistic[x,y], digits = decimals)
 
-        temp.res <- data.frame(stat.value = temp.stat.value, p.value = temp.p.value)
+        temp.res <- data.frame(levene.p = NA, stat.value = temp.stat.value, mean.diff = NA, ci.low = NA, ci.up = NA, p.value = temp.p.value)
         rownames(temp.res) <- temp.group
         if(!exists("result")) result <- temp.res
         else result <- rbind(temp.res, result)
       }
     }
 
+
     # print(result)
     # result <- cbind(levene.p = c(rep(NA,nrow(result))), result)
     result <- cbind(categories = rownames(result), result)
     result$p.value <- ifelse(result$p.value < small.p, paste("<", small.p), round(result$p.value, digits = decimals+1))
-    result <- rbind(c("ANOVA", chi.value,p.text), result)
+    result <- rbind(c("ANOVA", NA, chi.value, NA, NA, NA, p.text), result)
     result$method <- c("Conover Test", rep(NA, nrow(result)-1))
     rownames(result) <- NULL
 
@@ -297,7 +298,7 @@ comp.mean.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE, decim
 
 
 
-
+#' @export
 print.udaicR_mean_comp <- function(obj, ...) {
   if ("knitr" %in% rownames(installed.packages())){
     if (attr(obj,"show.desc")) print(knitr::kable(attr(obj,"desc")))

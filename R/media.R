@@ -75,18 +75,19 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   variables.names <- data.validate[["variables"]]
 
 
-
-  if(DEBUG) cat("[DEBUG] (media) by.name:", by.name, "\n")
-  if(DEBUG) print(paste("[DEBUG] (media) DATA -----",data.final,"\n\n"))
+  # if(DEBUG) cat("[DEBUG] (media) by.name:", by.name, "\n")
+  # if(DEBUG) print(paste("[DEBUG] (media) DATA -----",data.final,"\n\n"))
 
   data.name <- deparse(substitute(data))
   if (length(grep("$",data.name, fixed=TRUE)) == 1) data.name <- sub(".*\\$","",data.name)
 
   if(!is.data.frame(data)) names(data.final)[1] <- data.name
 
+
   result.final.raw <- media.data.frame(data.final, by = by.name, decimals = decimals, DEBUG = DEBUG)
+  if (DEBUG) print(result.final.raw)
   # result.final.raw <- result.final
-  result.final <- .pretify.media(result.final.raw)
+  result.final <- .pretify.media(result.final.raw, by.name)
 
 
 
@@ -156,10 +157,11 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 }
 
 
-.pretify.media <- function(data) {
+.pretify.media <- function(data, grouping = NA) {
 
-  grouping = FALSE
-  if (length(levels(as.factor(data$var))) < nrow(data)) grouping = TRUE
+  if (is.na(grouping)) grouping = FALSE
+  else grouping = TRUE
+  # if (length(levels(as.factor(data$var))) < nrow(data)) grouping = TRUE
 
   #.. if there are no categories then we don't need to "divide" the data.frame
 
@@ -172,6 +174,7 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
       }
     }
   } else result.final <- data
+
 
   return(result.final)
 }
