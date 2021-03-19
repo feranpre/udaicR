@@ -32,9 +32,12 @@ c$`Pr(>F)`
 
 
 
-media(DATOS$IMC)
+udaicR::media(DATOS$IMC, by =DATOS$SEXO)
+
+
 media(DATOS, variables = c("IMC","EDAD"), by="SEXO", DEBUG = T)
 media(DATOS, variables = c("IMC","EDAD"), DEBUG = T)
+media(DATOS$IMC)
 #====================================================
 #
 #  ---- is.normal ----
