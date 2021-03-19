@@ -134,7 +134,7 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
   if (DEBUG) cat("\n(media)CHECK.COL_NAMES: ",check.col_names,"\n")
   if (check.col_names) {
-    print("CUSTOM")
+    # print("CUSTOM")
     #--- custom col_names, so they must be checked
     num.correct.cols <- sum(sapply(names(result.final), function(x)x%in%names(col_names)))
     if (num.correct.cols != ncol(result.final)) col_names <- .media.col_names(lang, !is.na(by.name))
