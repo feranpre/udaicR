@@ -1,3 +1,22 @@
+
+
+
+get_data <- function(data, ..., by = NULL){
+
+  vars <- list(...)
+  # vars <- enquos(...)
+
+  print(vars)
+
+  # var.names <- sapply(vars, quo_name)
+
+
+}
+
+
+
+
+
 #' @usage
 #' --- using data as a data.frame ---
 #' media(data.frame)

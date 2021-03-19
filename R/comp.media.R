@@ -21,24 +21,24 @@
 #'
 #' @export
 #'
-comp.mean <- function(formula = NULL, data = NULL, variables = NULL, by = NULL, result.mean = NULL, decimals = 2,
-                      show.desc = TRUE,
-                      DEBUG = FALSE, show.warnings = FALSE, lang = "en") {
-
-  if(!missing(formula)) UseMethod("comp.mean", formula)
-
-  UseMethod("comp.mean",data)
-
-}
-
-
-comp.mean.formula <- function(formula, ...) {
-  print(formula)
-}
+# comp.mean <- function(formula = NULL, data = NULL, variables = NULL, by = NULL, result.mean = NULL, decimals = 2,
+#                       show.desc = TRUE,
+#                       DEBUG = FALSE, show.warnings = FALSE, lang = "en") {
+#
+#   if(!missing(formula)) UseMethod("comp.mean", formula)
+#
+#   UseMethod("comp.mean",data)
+#
+# }
+#
+#
+# comp.mean.formula <- function(formula, ...) {
+#   print(formula)
+# }
 
 
 #' @export
-comp.mean.data.frame <- function(data, variables, by, result.mean = NULL, decimals = 2,
+comp.mean <- function(data, variables, by, result.mean = NULL, decimals = 2,
                                  show.desc = TRUE,
                                  DEBUG = FALSE, show.warnings = FALSE, lang = "en") {
 
@@ -300,8 +300,12 @@ comp.mean.2.groups <- function(data, by=NULL, normal=FALSE, DEBUG = FALSE, decim
 
 #' @export
 print.udaicR_mean_comp <- function(obj, ...) {
+  # print(paste("COMP",attr(obj,"show.desc")))
   if ("knitr" %in% rownames(installed.packages())){
-    if (attr(obj,"show.desc")) print(knitr::kable(attr(obj,"desc")))
+    if (attr(obj,"show.desc")) {
+      # print("DESCRIPTIVOS")
+      print(knitr::kable(attr(obj,"desc")))
+      }
     print(knitr::kable(as.data.frame(obj)))
   } else {
     print(as.data.frame(obj))
