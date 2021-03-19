@@ -134,9 +134,10 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
   if (DEBUG) cat("\n(media)CHECK.COL_NAMES: ",check.col_names,"\n")
   if (check.col_names) {
+    print("CUSTOM")
     #--- custom col_names, so they must be checked
     num.correct.cols <- sum(sapply(names(result.final), function(x)x%in%names(col_names)))
-    if (num.correct.cols != ncol(result.final)) col_names <- .media.col_names(lang)
+    if (num.correct.cols != ncol(result.final)) col_names <- .media.col_names(lang, !is.na(by.name))
     else default.col_names = FALSE
   }
   else {
@@ -151,7 +152,8 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   # if(default.col_names) col_names <- col_names[names(result.final)]
 
   #-- now col_names number should match whether or not it was a custom column_name vector
-
+  # print(col_names)
+  # print(names(result.final))
   if(length(col_names) != ncol(result.final)) stop(.media.error.text(lang,"COL_NAMES_LENGTH"))
   names(result.final) <- col_names
 
@@ -199,11 +201,19 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 }
 
 
-.media.col_names <- function(lang="en") {
-  if (lang == "es") col_names <- c(var="var",groups="grupos",n.valid="n.validos",n.missing="n.perdidos",
+.media.col_names <- function(lang="en", by = TRUE) {
+  if (lang == "es") {
+    if (by) col_names <- c(var="var",groups="grupos",n.valid="n.validos",n.missing="n.perdidos",
                                    min="min",max="max",mean="media",sd="desv. est.",median="mediana",IQR="Rang.Inter",norm.test="es.normal")
-  else col_names <- c(var="var",groups="groups",n.valid="n.valid",n.missing="n.missing",
+    else col_names <- c(var="var",n.valid="n.validos",n.missing="n.perdidos",
+                        min="min",max="max",mean="media",sd="desv. est.",median="mediana",IQR="Rang.Inter",norm.test="es.normal")
+  }
+  else{
+    if (by) col_names <- c(var="var",groups="groups",n.valid="n.valid",n.missing="n.missing",
                       min="min",max="max",mean="mean",sd="sd",median="median",IQR="IQR",norm.test="is.normal")
+    else col_names <- c(var="var",n.valid="n.valid",n.missing="n.missing",
+                        min="min",max="max",mean="mean",sd="sd",median="median",IQR="IQR",norm.test="is.normal")
+  }
   return(col_names)
 }
 
