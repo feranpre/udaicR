@@ -19,9 +19,10 @@ data_$EMPTY <- rep(NA,nrow(data_))
 data_$HEALTH <- as.factor(data_$HEALTH)
 
 
-c <- udaicR::comp.mean(data_, c("HEIGHT"), by= "HEALTH", show.desc = T)
+udaicR::comp.mean(data_, c("HEIGHT"), by= "HEALTH", show.desc = T)
+udaicR::media(data_$AGE, by = data_$SEX)
+media(data_$AGE, by = data_$SEX)
 
-c
 load("DATOS.RData")
 
 t.test(data_$AGE ~ data_$SEX, equal.var = FALSE)
