@@ -88,17 +88,32 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
 
 
-  data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang)
+
+  by.temp.name <- deparse(substitute(by))
+  if (DEBUG) print(paste("[DEBUG](media) By length:", length(by.temp.name)))
+  print(by.temp.name)
+  if (length(grep("$",by.temp.name, fixed=TRUE)) == 1) by.name <- sub(".*\\$","",by.temp.name)
+
+  data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang, by.name = by.name)
   data.final <- data.validate[["data"]]
   by.name <- data.validate[["by"]]
   variables.names <- data.validate[["variables"]]
 
 
-  # if(DEBUG) cat("[DEBUG] (media) by.name:", by.name, "\n")
-  # if(DEBUG) print(paste("[DEBUG] (media) DATA -----",data.final,"\n\n"))
-
   data.name <- deparse(substitute(data))
   if (length(grep("$",data.name, fixed=TRUE)) == 1) data.name <- sub(".*\\$","",data.name)
+
+
+
+
+
+  if(DEBUG) cat("[DEBUG] (media) by.name:", by.name, "\n")
+  if(DEBUG) {
+    print("[DEBUG] (media) DATA -----")
+    print(data.final)
+    cat("\n\n")
+  }
+
 
   if(!is.data.frame(data)) names(data.final)[1] <- data.name
 
