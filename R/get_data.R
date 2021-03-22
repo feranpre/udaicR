@@ -22,6 +22,79 @@ data_ <- rbind(data_, list(NA,NA,NA,"No","Bad"))
 data_$EMPTY <- rep(NA,nrow(data_))
 data_$HEALTH <- as.factor(data_$HEALTH)
 
+
+.log <- function(msg) {
+
+  call.temp <- .parse.call()
+  call.fun <- attr(call.temp,"FUN")
+  call.fun.text <- paste0("(",call.fun,")")
+  if (!is.data.frame(msg) & !is.list(msg) & !is.array(msg) & !is.matrix(msg))  cat("\n",call.fun.text,":",msg)
+  else {
+    cat("\n",call.fun.text,"\n", sep = "")
+    print(msg)
+  }
+
+  # cat("\n",mensaje,"\n")
+}
+
+
+# .parse.call <- function(llamada = deparse(sys.calls()[[sys.nframe()-1]])){
+.parse.call <- function(f){
+
+
+  if(missing(f))  ORIGINAL.CALL <- deparse(sys.call(sys.parent()))
+  else ORIGINAL.CALL <- f
+  # print(ORIGINAL.CALL)
+
+  temp.call <- strsplit(ORIGINAL.CALL,"\\(")[[1]]
+  FUNC.NAME <- temp.call[1]
+
+  # cat("\n\nFUNCTION -> ", FUNC.NAME,"\n")
+  if (length(temp.call) <= 1) return(FUNC.NAME) #---------------------- create function.call object
+  temp.args <- stringr::str_extract(ORIGINAL.CALL, '(?<=\\().*(?=\\))')
+  # temp.args <- strsplit(temp.args,",")[[1]]
+  temp.args <- strsplit(temp.args, ",(?![^()]*\\))", perl = T)[[1]]
+  TOTAL.ARGS <- length(temp.args)
+  # print(temp.args)
+  arguments.list <- list()
+  for(arg.num in 1:TOTAL.ARGS){
+    arg.text <- temp.args[arg.num]
+    # arg.split <- strsplit(temp.args[arg.num],"=")[[1]]
+    arg.name <- stringr::str_extract(arg.text, '.*(?==)') # --- cogemos lo que hay ANTES de = si es que hay algo
+    arg.value <- stringr::str_extract(arg.text, '(?<==)(?![^\\(]*\\))(.*)') # --- cogemos lo que hay DETRAS de '=' si hay algo y de paso IGNORAMOS lo que haya dentro de '()', espara evitar confundir 'by=c(asdf=asdf,sadf=asdf)'
+    # print(paste("TEXT: ", arg.text))
+    # print(paste("NAME: ", arg.name))
+    # print(paste("VALUE: ", arg.value))
+    #--- if there is a named argument BOTH must be not NA, else there is no =
+    if (is.na(arg.name) | is.na(arg.value)) {
+      #-- if any of them are NA we have a not-named argument
+      # print("ISNA")
+      arg.value <- temp.args[arg.num]
+      arg.name = "NA"
+    }
+
+    arguments.list[[arg.num]] <- c("ARG.NAME" = gsub(" ","",arg.name),
+                                   "ARG.VALUE" = gsub(" ","",arg.value))
+
+  }
+  # print(arguments.list)
+  # attr(ORIGINAL.CALL,"ORIGINAL.CALL") <- FUNC.NAME
+  attr(ORIGINAL.CALL,"FUN") <- FUNC.NAME
+  attr(ORIGINAL.CALL,"TOTAL.ARGS") <- TOTAL.ARGS
+  attr(ORIGINAL.CALL, "LIST.ARGS") <- arguments.list
+  class(ORIGINAL.CALL) <- "udaicR.function.parse"
+  return(ORIGINAL.CALL)
+}
+
+print.udaicR.function.parse <- function(obj,...) {
+  cat("\n Original call:", as.character(obj))
+  cat("\n Fun name:", attr(obj,"FUN"))
+  cat("\n Total args passed:", attr(obj,"TOTAL.ARGS"))
+  cat("\n Argument list:\n")
+  print(attr(obj,"LIST.ARGS"))
+}
+
+
 get.data <- function(x, ..., by = NULL) {
 
   DATA.FRAME = FALSE
@@ -29,48 +102,18 @@ get.data <- function(x, ..., by = NULL) {
   OBS.TOTALES = 0
 
   parametros <- list(...)
+  print(.parse.call())
+  return()
 # print(parametros)
+  LLAMADA <- tryCatch({
+                deparse(sys.calls()[[sys.nframe()-1]])
+              }, error = function(err){
+                return("NA")
+              })
+  llamada <- .parse.call(LLAMADA)
 
-    tryCatch({
-      ORIGINAL.CALL <- deparse(sys.calls()[[sys.nframe()-1]])
-      temp.call <- strsplit(ORIGINAL.CALL,"\\(")[[1]]
-      if (length(temp.call) >= 2) {
-        ORIGINAL.CALL <- temp.call[2]
-        temp.call <- strsplit(ORIGINAL.CALL,"\\)")[[1]]
-        if (length(temp.call) >= 1) {
-          ORIGINAL.CALL <- temp.call[1]
 
-          temp.call <- strsplit(ORIGINAL.CALL,",")[[1]]
-          for(part in temp.call) {
-            part <- gsub('\\s+', '',part) #<-- quitamos espacios en blanco
-            if (tolower(substr(part,1,3)) == "by=") print(paste("BY ENCONTRADO --> ", part))
-          }
-          # print("ORIGINAL --->")
-          # print(ORIGINAL.CALL)
-        }
-      }
-
-      }, error = function(err){
-        ORIGINAL.CALL <- "NA"
-      })
-  #   if( ORIGINAL.CALL != "eval(ei, envir)") {
-  #      ORIGINAL.CALL <- gsub('\\s+', '',ORIGINAL.CALL) #-- remove all spaces
-  #       print(ORIGINAL.CALL)
-  #     if (length(grep("(",ORIGINAL.CALL, fixed=TRUE)) == 1) ORIGINAL.FUN <- sub("\\(.*","", ORIGINAL.CALL)
-  #     if (length(grep("by=",ORIGINAL.CALL, fixed=TRUE)) == 1) ORIGINAL.BY <- sub("by=*.","", ORIGINAL.CALL)
-  #
-  #
-  #     # print(ORIGINAL.FUN)
-  #     # print(ORIGINAL.BY)
-  #
-  #   }
-  #   else {
-  #     ORIGINAL.FUN <- "get.data"
-  #     ORIGINAL.BY <- deparse(substitute(by))
-  #     print(ORIGINAL.BY)
-  #   }
-  # # print(ORIGINAL.CALL)
-
+  return()
   if(is.data.frame(x)) {
     DATA.FRAME = TRUE
     OBS.TOTALES = nrow(x)
@@ -143,6 +186,9 @@ get.data <- function(x, ..., by = NULL) {
   return(x)
 }
 
+
+
+
 prueba <- function(x, ...) {
   get.data(x,...)
 }
@@ -173,19 +219,28 @@ print.udaicR_DATA <- function(obj,..) {
   # print(as.data.frame(obj))
   print(attr(obj,"by.name"))
   # print(attr(obj, "by"))
+
 }
-prueba(data_, by="SEX")
-# prueba(data_)
-prueba(data_, by=v1)
-
-get.data(data_$AGE, data_$AGE)
-get.data(data_, by="SEX")
-get.data(data_, by=c("SEX", "HEALTH"))
-get.data(data_, by=c("h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h"))
-get.data(data_, by=factor(v1))
-get.data(data_, by=v1)
 
 
-tryCatch({get.data(data_, by=c("SEX","SEX2"))}, error = function(err) {print(err)})
-tryCatch({get.data(data_, by=c(1,0,1,0))}, error = function(err) {print(err)})
+
+
+
+
+
+
+# prueba(data_, by="SEX")
+# # prueba(data_)
+# prueba(data_, by=v1)
+#
+# get.data(data_$AGE, data_$AGE)
+# get.data(data_, by="SEX")
+# get.data(data_, by=c("SEX", "HEALTH"))
+# get.data(data_, by=c("h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h"))
+# get.data(data_, by=factor(v1))
+# get.data(data_, by=v1)
+#
+#
+# tryCatch({get.data(data_, by=c("SEX","SEX2"))}, error = function(err) {print(err)})
+# tryCatch({get.data(data_, by=c(1,0,1,0))}, error = function(err) {print(err)})
 tryCatch({get.data(data_, by=c("h","h"))}, error = function(err) {print(err)})
