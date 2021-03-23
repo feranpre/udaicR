@@ -20,7 +20,7 @@ data_$HEALTH <- as.factor(data_$HEALTH)
 
 
 udaicR::comp.mean(data_, c("HEIGHT"), by= "HEALTH", show.desc = T)
-udaicR::media(data_$AGE, by = data_$SEX)
+media(data_$AGE, by = data_$SEX)
 media(data_$AGE, by = data_$SEX)
 
 load("DATOS.RData")
@@ -29,6 +29,7 @@ t.test(data_$AGE ~ data_$SEX, equal.var = FALSE)
 t.test(data_$AGE ~ data_$SEX, equal.var = TRUE)
 c <-car::leveneTest(data_$AGE, group= data_$SEX)
 c$`Pr(>F)`
+
 
 
 
