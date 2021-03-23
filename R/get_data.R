@@ -57,6 +57,7 @@ data_$HEALTH <- as.factor(data_$HEALTH)
   TOTAL.ARGS <- length(temp.args)
   # print(temp.args)
   arguments.list <- list()
+  unnamed.arguments.list <- list()
   for(arg.num in 1:TOTAL.ARGS){
     arg.text <- temp.args[arg.num]
     # arg.split <- strsplit(temp.args[arg.num],"=")[[1]]
@@ -71,9 +72,17 @@ data_$HEALTH <- as.factor(data_$HEALTH)
       # print("ISNA")
       arg.value <- temp.args[arg.num]
       arg.name = "NA"
+
+      #-- quitamos el simbolo de $ y nos aseguramos de que no se repite el nombre
+      arg.no.dollar <- stringr::str_extract(arg.value, '(?<=\\$).*')
+      if (arg.no.dollar %in% unnamed.arguments.list) arg.no.dollar <- paste0(arg.no.dollar,".",length(unnamed.arguments.list))
+      if (length(unnamed.arguments.list)  == 0) unnamed.arguments.list <- arg.no.dollar
+      else unnamed.arguments.list <- c(unnamed.arguments.list, arg.no.dollar)
+      arg.no.dollar <- NULL
+
     }
 
-    arguments.list[[arg.num]] <- c("ARG.NAME" = gsub(" ","",arg.name),
+    arguments.list[[gsub(" ","",arg.name)]] <- c("ARG.NAME" = gsub(" ","",arg.name),
                                    "ARG.VALUE" = gsub(" ","",arg.value))
 
   }
@@ -82,6 +91,7 @@ data_$HEALTH <- as.factor(data_$HEALTH)
   attr(ORIGINAL.CALL,"FUN") <- FUNC.NAME
   attr(ORIGINAL.CALL,"TOTAL.ARGS") <- TOTAL.ARGS
   attr(ORIGINAL.CALL, "LIST.ARGS") <- arguments.list
+  attr(ORIGINAL.CALL, "LIST.UNNAMED.ARGS") <- unnamed.arguments.list
   class(ORIGINAL.CALL) <- "udaicR.function.parse"
   return(ORIGINAL.CALL)
 }
@@ -92,61 +102,111 @@ print.udaicR.function.parse <- function(obj,...) {
   cat("\n Total args passed:", attr(obj,"TOTAL.ARGS"))
   cat("\n Argument list:\n")
   print(attr(obj,"LIST.ARGS"))
+  cat("\n Unnamed argument list:\n")
+  print(attr(obj,"LIST.UNNAMED.ARGS"))
 }
 
 
-get.data <- function(x, ..., by = NULL) {
+get.data <- function(x, ..., by = NULL, data = NULL) {
 
   DATA.FRAME = FALSE
   BY = FALSE
   OBS.TOTALES = 0
 
   parametros <- list(...)
-  print(.parse.call())
-  return()
+  # print(.parse.call())
+
 # print(parametros)
-  LLAMADA <- tryCatch({
-                deparse(sys.calls()[[sys.nframe()-1]])
-              }, error = function(err){
-                return("NA")
-              })
-  llamada <- .parse.call(LLAMADA)
+  # LLAMADA <- tryCatch({
+  #               deparse(sys.calls()[[sys.nframe()-1]])
+  #             }, error = function(err){
+  #               return("NA")
+  #             })
+  LLAMADA <- .parse.call()
+  print(LLAMADA)
+  nombres.parametros <- attr(LLAMADA, "LIST.UNNAMED.ARGS")
 
+  #data could be a data.frame and so could X and ...
 
-  return()
   if(is.data.frame(x)) {
     DATA.FRAME = TRUE
-    OBS.TOTALES = nrow(x)
+    RAW.DATA <- x
   }
   else {
     DATA.FRAME = FALSE
-    OBS.TOTALES = length(x)
-    x <- as.data.frame(x)
+    RAW.DATA <- as.data.frame(x)
+    # print("DENTROOOOOOOOO")
+    # print(attr(LLAMADA, "LIST.ARGS")[["x"]]["ARG.NAME"])
+    # print(RAW.DATA)
+    if ("x" %in% names(attr(LLAMADA, "LIST.ARGS")))  names(RAW.DATA) <- attr(LLAMADA, "LIST.ARGS")[["x"]]["ARG.NAME"]
+    else {
+      names(RAW.DATA) <- nombres.parametros[1]
+      nombres.parametros <- nombres.parametros[-1]
+    }
   }
+
+
+  if (!missing(data)) {
+    # --- there is a data parameter, this MUST be a data.frame
+    if (!is.data.frame(data)) stop(.error.udaicR("get_data", "DATA_NOT_DF"))
+    if (exists("RAW.DATA")) {
+      if (nrow(RAW.DATA) != nrow(data)) stop(.error.udaicR("get_data","DATA_AND_X_LENGTHS"))
+      RAW.DATA <- tryCatch({
+          cbind(data, RAW.DATA)
+        }, error = function(err){
+          print(paste("[ERROR](get_data):",err))
+        }
+        )
+    }
+    else RAW.DATA <- data
+  }
+
+
+  OBS.TOTALES <- nrow(RAW.DATA)
 
   #---------- QUITAMOS PARAMETROS QUE NO SON DATOS HASTA QUEDARNOS SOLO CON LOS DATOS
-  parametros.data <- parametros[!("by" %in% names(parametros))]
 
+  # parametros.data <- parametros[!("by" %in% names(parametros))]
+  parametros.data <- parametros
+  # cat("\nPARAM NUM: ", length(parametros.data))
+  # ------------- hay parámetros con datos
   if (length(parametros.data) > 0 ) {
-        print(parametros.data[[1]])
-      #-- estos se supone que son varaibles numéricas
-      temp.error = TRUE
-      tryCatch({
-        x.temp <- cbind(x, lapply(parametros.data,as.data.frame))
-        temp.error = FALSE
-      }, warning = function(warn){
-        print(warn)
-      }, error = function(err){
-        print(err)
-      })
-      if (!temp.error) x <- x.temp
+    # print(parametros.data[[1]])
+    #-- estos se supone que son varaibles numéricas
+    temp.error = TRUE
+    #--- RAW.DATA always exists?
+    x.temp <- data.frame(EMPTY.UDAICR = 1:nrow(RAW.DATA))
+    x.temp <- cbind(x.temp,lapply(parametros.data,as.data.frame))
+    x.temp$EMPTY.UDAICR <- NULL
+
+    print(attr(LLAMADA,"LIST.UNNAMED.ARGS"))
+    if (ncol(x.temp) == length(attr(LLAMADA,"LIST.UNNAMED.ARGS")[[1]])) names(x.temp) <- attr(LLAMADA,"LIST.UNNAMED.ARGS")[[1]]
+    print(x.temp)
+    return()
+    tryCatch({
+      x.temp <- cbind(RAW.DATA, x.temp)
+      temp.error = FALSE
+    }, warning = function(warn){
+      cat("\n[WARNING](get_data): While creating data.frame with ... ",paste(warn))
+    }, error = function(err){
+      cat("\n[ERROR](get_data): While creating data.frame with ... :",paste(err))
+    })
+    if (!temp.error) MERGED.DATA <- x.temp
   }
 
+  if (!exists("MERGED.DATA")) MERGED.DATA <- RAW.DATA
+
+  print(MERGED.DATA)
+  return()
+
+  # --- RAW.DATA is 'data' + x
+  # --- MERGED.DATA is RAW.DATA + ...
+  # --- FINAL.DATA is MERGED.DATA + by
   if(!missing(by)) {
     # BY.ORIGINAL.CALL <- deparse(substitute(by))
     # print(BY.ORIGINAL.CALL)
     by.value <- by
-    print(x)
+    print(RAW.DATA)
     if(!is.numeric(by.value) & DATA.FRAME) {
 
       # -- if values are names of columns take them
@@ -197,12 +257,16 @@ prueba <- function(x, ...) {
   error.text <- list()
   error.text[["en"]] <- c(
     GENERIC = "generic error",
+    DATA_NOT_DF = "'data' parameter was specified but is not a data.frame",
+    DATA_AND_X_LENGTHS  = "data sources differ in lengths",
     BY_VAR_NOT_IN_DF = "By variable not in the data.frame",
     BY_LENGTH = "BY variable length is not the same as the data.frame",
     BY_LENGTH_NO_DF = "BY variable length is not the same as the rest"
   )
   error.text[["es"]] <- c(
     GENERIC = "error generico",
+    DATA_NOT_DF = "el argumento 'data' ha sido especificado pero no es un data.frame",
+    DATA_AND_X_LENGTHS  = "las fuentes de datos tienen longitudes distintas",
     BY_VAR_NOT_IN_DF = "La variable BY no está en el data.frame",
     BY_LENGTH = "La longitud de la variable BY no es la misma que la del data.frame",
     BY_LENGTH_NO_DF = "La longitud de la variable BY no es la misma que la del resto de variables"
@@ -233,7 +297,7 @@ print.udaicR_DATA <- function(obj,..) {
 # # prueba(data_)
 # prueba(data_, by=v1)
 #
-# get.data(data_$AGE, data_$AGE)
+get.data(x=data_$AGE, data_$AGE)
 # get.data(data_, by="SEX")
 # get.data(data_, by=c("SEX", "HEALTH"))
 # get.data(data_, by=c("h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h"))
@@ -243,4 +307,5 @@ print.udaicR_DATA <- function(obj,..) {
 #
 # tryCatch({get.data(data_, by=c("SEX","SEX2"))}, error = function(err) {print(err)})
 # tryCatch({get.data(data_, by=c(1,0,1,0))}, error = function(err) {print(err)})
-tryCatch({get.data(data_, by=c("h","h"))}, error = function(err) {print(err)})
+# tryCatch({get.data(data_, by=c("h","m","m","h","m","h","h","m"))}, error = function(err) {print(err)})
+# get.data(data_, by=c("h","m","m","h","m","h","h","m"))

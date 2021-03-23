@@ -211,7 +211,7 @@ comp.mean.many.groups <- function(data, formula = NULL, by=NULL, by.name = NULL,
     # result <- cbind(levene.p = c(rep(NA,nrow(result))), result)
     result <- cbind(categories = rownames(result), result)
     result$p.value <- ifelse(result$p.value < small.p, paste("<", small.p), round(result$p.value, digits = decimals+1))
-    result <- rbind(c("ANOVA", NA, chi.value, NA, NA, NA, p.text), result)
+    result <- rbind(c("Kruskal-Wallis", NA, chi.value, NA, NA, NA, p.text), result)
     result$method <- c("Conover Test", rep(NA, nrow(result)-1))
     rownames(result) <- NULL
 
