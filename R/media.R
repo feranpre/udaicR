@@ -94,7 +94,8 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   print(by.temp.name)
   if (length(grep("$",by.temp.name, fixed=TRUE)) == 1) by.name <- sub(".*\\$","",by.temp.name)
 
-  data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang, by.name = by.name)
+  # data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang, by.name = by.name)
+  data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang)
   data.final <- data.validate[["data"]]
   by.name <- data.validate[["by"]]
   variables.names <- data.validate[["variables"]]
