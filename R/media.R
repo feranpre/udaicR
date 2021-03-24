@@ -91,7 +91,7 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
   by.temp.name <- deparse(substitute(by))
   if (DEBUG) print(paste("[DEBUG](media) By length:", length(by.temp.name)))
-  print(by.temp.name)
+
   if (length(grep("$",by.temp.name, fixed=TRUE)) == 1) by.name <- sub(".*\\$","",by.temp.name)
 
   # data.validate <- .media.validate.data(data=data, variables = variables, by=by, lang=lang, by.name = by.name)
