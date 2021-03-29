@@ -240,9 +240,6 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
     attr(x,"by") <- "NA"
   }
 
-
-
-
   return(x)
 }
 
