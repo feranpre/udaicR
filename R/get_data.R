@@ -123,7 +123,7 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
   #               return("NA")
   #             })
   LLAMADA <- .parse.call()
-  print(LLAMADA)
+  # print(LLAMADA)
   nombres.parametros <- attr(LLAMADA, "LIST.UNNAMED.ARGS")
 
   #data could be a data.frame and so could X and ...
@@ -135,9 +135,13 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
   else {
     DATA.FRAME = FALSE
     RAW.DATA <- as.data.frame(x)
-    # print("DENTROOOOOOOOO")
-    # print(attr(LLAMADA, "LIST.ARGS")[["x"]]["ARG.NAME"])
-    # print(RAW.DATA)
+    #-- there's a difference between using x as the first parameter
+    #   and casting it
+    #   get.data(data$variable)   <-- here "x" is NOT in the parameters list
+    #   get.data(x=data$variable) <-- here "x" IS in the list
+    #
+    #   If x was specified we DO NOT need to take any names from the parameter list
+    #   because x will NOT be in that list.
     if ("x" %in% names(attr(LLAMADA, "LIST.ARGS")))  names(RAW.DATA) <- attr(LLAMADA, "LIST.ARGS")[["x"]]["ARG.NAME"]
     else {
       names(RAW.DATA) <- nombres.parametros[1]
@@ -157,8 +161,7 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
           print(paste("[ERROR](get_data):",err))
         }
         )
-    }
-    else RAW.DATA <- data
+    } else RAW.DATA <- data
   }
 
 
@@ -179,10 +182,10 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
     x.temp <- cbind(x.temp,lapply(parametros.data,as.data.frame))
     x.temp$EMPTY.UDAICR <- NULL
 
-    print(attr(LLAMADA,"LIST.UNNAMED.ARGS"))
+    # print(attr(LLAMADA,"LIST.UNNAMED.ARGS"))
     if (ncol(x.temp) == length(attr(LLAMADA,"LIST.UNNAMED.ARGS")[[1]])) names(x.temp) <- attr(LLAMADA,"LIST.UNNAMED.ARGS")[[1]]
-    print(x.temp)
-    return()
+    # print(x.temp)
+
     tryCatch({
       x.temp <- cbind(RAW.DATA, x.temp)
       temp.error = FALSE
@@ -196,26 +199,42 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
 
   if (!exists("MERGED.DATA")) MERGED.DATA <- RAW.DATA
 
-  print(MERGED.DATA)
-  return()
+  # print(MERGED.DATA)
+  # return()
 
   # --- RAW.DATA is 'data' + x
   # --- MERGED.DATA is RAW.DATA + ...
   # --- FINAL.DATA is MERGED.DATA + by
+  #
+  #
+  #
+  #
+  #
+  #  --- DECISIONES QUE TOMAR ---
+  #  Hace falta decidir cómo lo quiero hacer
+  #  Si la estructura es DATA.FRAME y luego tenemos:
+  #      - Lista de nombres de VARIABLES
+  #      - Lista de nombres BY
+  #
+  #      * Entonces tenemos que METER en el DATA.FRAME las BY y quedarnos los nombres
+  #
+  #  Si lo queremos separar tendremos un DATA.FRAME de DATOS y OTRO de BY
   if(!missing(by)) {
     # BY.ORIGINAL.CALL <- deparse(substitute(by))
     # print(BY.ORIGINAL.CALL)
     by.value <- by
-    print(RAW.DATA)
+    # print(RAW.DATA)
     if(!is.numeric(by.value) & DATA.FRAME) {
 
       # -- if values are names of columns take them
-        if (all(by.value %in% names(x))) {
+        if (all(by.value %in% names(MERGED.DATA))) {
           by.name <- by.value
-          by.value <- as.data.frame(x[,by.value])
+          by.value <- as.data.frame(MERGED.DATA[,by.value])
           names(by.value) <- by.name
-          x <- x[, !(names(x) %in% by.name)]
+          MERGED.DATA <- MERGED.DATA[, !(names(MERGED.DATA) %in% by.name)]
         }
+      # -- if values are NOT in data.frame and therefore are not variables names
+      #    then we try to make a variable out of it
         else if (length(by.value) == OBS.TOTALES) {
           by.value <- as.data.frame(by.value)
           by.name = "NA"
@@ -239,9 +258,6 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
     attr(x,"by.name") <- "NA"
     attr(x,"by") <- "NA"
   }
-
-
-
 
   return(x)
 }
@@ -298,6 +314,7 @@ print.udaicR_DATA <- function(obj,..) {
 # prueba(data_, by=v1)
 #
 get.data(x=data_$AGE, data_$AGE)
+get.data(data_$AGE, data_$AGE)
 # get.data(data_, by="SEX")
 # get.data(data_, by=c("SEX", "HEALTH"))
 # get.data(data_, by=c("h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h"))
