@@ -20,7 +20,7 @@ data_$HEALTH <- as.factor(data_$HEALTH)
 
 
 udaicR::comp.mean(data_, c("HEIGHT"), by= "HEALTH", show.desc = T)
-media(data_$AGE, by = data_$SEX)
+udaicR::media(data_$AGE, by = data_$SEX)
 media(data_$AGE, by = data_$SEX)
 
 load("DATOS.RData")
@@ -32,10 +32,12 @@ c$`Pr(>F)`
 
 
 
+udaicR::media(DATOS$IMC, by =DATOS$SEXO)
 
-media(DATOS$IMC)
+
 media(DATOS, variables = c("IMC","EDAD"), by="SEXO", DEBUG = T)
 media(DATOS, variables = c("IMC","EDAD"), DEBUG = T)
+media(DATOS$IMC)
 #====================================================
 #
 #  ---- is.normal ----
