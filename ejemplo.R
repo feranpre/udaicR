@@ -23,7 +23,9 @@ udaicR::comp.mean(data_, c("HEIGHT"), by= "HEALTH", show.desc = T)
 udaicR::media(data_$AGE, by = data_$SEX)
 media(data_$AGE, by = data_$SEX)
 
-load("DATOS.RData")
+comp.mean(data_,"AGE", by = "SEX")
+
+
 
 t.test(data_$AGE ~ data_$SEX, equal.var = FALSE)
 t.test(data_$AGE ~ data_$SEX, equal.var = TRUE)
@@ -34,6 +36,7 @@ c$`Pr(>F)`
 
 udaicR::media(DATOS$IMC, by =DATOS$SEXO)
 
+media(dat)
 
 media(DATOS, variables = c("IMC","EDAD"), by="SEXO", DEBUG = F)
 media(DATOS, variables = c("IMC","EDAD"), DEBUG = T)

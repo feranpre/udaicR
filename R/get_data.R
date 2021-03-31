@@ -114,19 +114,8 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
   OBS.TOTALES = 0
 
   parametros <- list(...)
-  # print(.parse.call())
-
-# print(parametros)
-  # LLAMADA <- tryCatch({
-  #               deparse(sys.calls()[[sys.nframe()-1]])
-  #             }, error = function(err){
-  #               return("NA")
-  #             })
   LLAMADA <- .parse.call()
-  # print(LLAMADA)
   nombres.parametros <- attr(LLAMADA, "LIST.UNNAMED.ARGS")
-
-  #data could be a data.frame and so could X and ...
 
   if(is.data.frame(x)) {
     DATA.FRAME = TRUE
@@ -309,14 +298,17 @@ print.udaicR_DATA <- function(obj,..) {
 
 
 
-# prueba(data_, by="SEX")
+prueba(data_, by="SEX")
+prueba(data_, by=c("SEX", "HEALTH"))
+c <- prueba(data_, variables = c("AGE", "HEIGHT"), by=c("SEX", "HEALTH"))
+
 # # prueba(data_)
 # prueba(data_, by=v1)
 #
 # get.data(x=data_$AGE, data_$AGE)
 # get.data(data_$AGE, data_$AGE)
 # get.data(data_, by="SEX")
-# get.data(data_, by=c("SEX", "HEALTH"))
+get.data(data_, by=c("SEX", "HEALTH"))
 # get.data(data_, by=c("h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h"))
 # get.data(data_, by=factor(v1))
 # get.data(data_, by=v1)
