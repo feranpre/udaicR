@@ -228,14 +228,12 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
           by.value <- as.data.frame(by.value)
           by.name = "NA"
         } else stop(.error.udaicR("get_data", "BY_VAR_NOT_IN_DF"))
-
     }
     #-- if not name of columns but same lenght as X make it an independent var
     else if (length(by.value) == OBS.TOTALES) {
       by.value <- as.data.frame(by.value)
       by.name = "NA"
     } else stop(.error.udaicR("get_data", "BY_VAR_NOT_IN_DF"))
-
 
     class(x) <- append("udaicR_DATA", class(x))
     attr(x,"by.name") <- by.name
