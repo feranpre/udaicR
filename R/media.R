@@ -247,14 +247,13 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
     #.. is a string or a factor
     if(length(by) > 1) { #.. is a vector
-      # print("DENTRO")
+      print("DENTRO")
       by.name <- deparse(substitute(by))
       if (length(grep("$",by.name, fixed=TRUE)) == 1) by.name <- sub(".*\\$","",by.name)
       if (length(by) != nrow(data.final)) stop(.media.error.text(lang,"BY_LENGTH"))
       if (by.name %in% names(data.final)) by.name <- paste0(by.name,"_",sum(names(data.final)==by.name)+1)
       data.final <- cbind(data.final, by)
       names(data.final)[ncol(data.final)] <- by.name
-
       # print(data.final)
     }
     else if (length(by) == 1) { #.. is the name of the variable
@@ -265,7 +264,9 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
     else stop(.media.error.text(lang,"BY_GENERIC_ERROR"))
 
     #.. at this point the 'by' data MUST be in data.final AND the name of the var in by.name therefore
-    by.levels <- levels(as.factor(data.final[,eval(by.name)]))
+# print(as.factor(data.final[,eval(by.name)][[1]]))
+
+    by.levels <- levels(as.factor(data.final[,eval(by.name)][[1]]))
     by.num.levels <- length(by.levels)
   }
   else {
