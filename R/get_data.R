@@ -313,8 +313,8 @@ print.udaicR_DATA <- function(obj,..) {
 # # prueba(data_)
 # prueba(data_, by=v1)
 #
-get.data(x=data_$AGE, data_$AGE)
-get.data(data_$AGE, data_$AGE)
+# get.data(x=data_$AGE, data_$AGE)
+# get.data(data_$AGE, data_$AGE)
 # get.data(data_, by="SEX")
 # get.data(data_, by=c("SEX", "HEALTH"))
 # get.data(data_, by=c("h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h","m","h","h","m","h"))

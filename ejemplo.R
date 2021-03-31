@@ -35,7 +35,7 @@ c$`Pr(>F)`
 udaicR::media(DATOS$IMC, by =DATOS$SEXO)
 
 
-media(DATOS, variables = c("IMC","EDAD"), by="SEXO", DEBUG = T)
+media(DATOS, variables = c("IMC","EDAD"), by="SEXO", DEBUG = F)
 media(DATOS, variables = c("IMC","EDAD"), DEBUG = T)
 media(DATOS$IMC)
 #====================================================

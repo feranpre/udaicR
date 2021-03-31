@@ -104,12 +104,8 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
   data.name <- deparse(substitute(data))
   if (length(grep("$",data.name, fixed=TRUE)) == 1) data.name <- sub(".*\\$","",data.name)
 
-
-
-
-
-  if(DEBUG) cat("[DEBUG] (media) by.name:", by.name, "\n")
   if(DEBUG) {
+    cat("[DEBUG] (media) by.name:", by.name, "\n")
     print("[DEBUG] (media) DATA -----")
     print(data.final)
     cat("\n\n")
