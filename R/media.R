@@ -247,7 +247,7 @@ media <- function(data, variables = NA, by = NA, decimals = 2, show_warnings = T
 
     #.. is a string or a factor
     if(length(by) > 1) { #.. is a vector
-      print("DENTRO")
+      # print("DENTRO")
       by.name <- deparse(substitute(by))
       if (length(grep("$",by.name, fixed=TRUE)) == 1) by.name <- sub(".*\\$","",by.name)
       if (length(by) != nrow(data.final)) stop(.media.error.text(lang,"BY_LENGTH"))
