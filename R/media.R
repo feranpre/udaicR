@@ -6,7 +6,7 @@ get_data <- function(data, ..., by = NULL){
   vars <- list(...)
   # vars <- enquos(...)
 
-  print(vars)
+  # print(vars)
 
   # var.names <- sapply(vars, quo_name)
 

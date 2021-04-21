@@ -41,8 +41,13 @@ data_$HEALTH <- as.factor(data_$HEALTH)
 # .parse.call <- function(llamada = deparse(sys.calls()[[sys.nframe()-1]])){
 .parse.call <- function(f){
 
-
-  if(missing(f))  ORIGINAL.CALL <- deparse(sys.call(sys.parent()))
+  origen = 1
+  for(num in 1:sys.nframe()){
+    origen = num -1
+    if (deparse(sys.call(sys.parent(n=num))) == ".parse.call()" ) break
+    # print(deparse(sys.call(sys.parent(n=num))))
+  }
+  if(missing(f))  ORIGINAL.CALL <- deparse(sys.call(sys.parent(n=origen)))
   else ORIGINAL.CALL <- f
   # print(ORIGINAL.CALL)
 
@@ -160,6 +165,8 @@ get.data <- function(x, ..., by = NULL, data = NULL) {
 
   # parametros.data <- parametros[!("by" %in% names(parametros))]
   parametros.data <- parametros
+
+  print(parametros.data)
   # cat("\nPARAM NUM: ", length(parametros.data))
   # ------------- hay parámetros con datos
   if (length(parametros.data) > 0 ) {
